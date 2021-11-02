@@ -9,9 +9,6 @@ Static pages generating DSL.
 - **Host**
 - **PageGenerator**
 - **Schema**
-- **Property**
-- **Attribute**
-- **Configurers**
 
 ## Model
 

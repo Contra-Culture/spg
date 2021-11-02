@@ -1,5 +1,5 @@
-github.com/Contra-Culture/go2html v0.0.0-20211011075454-c9a5b2b1f011 h1:jIaYDU07qAJmb8k9ZRaqg0Q9ca+jeKfTFxv0h+FJg4M=
-github.com/Contra-Culture/go2html v0.0.0-20211011075454-c9a5b2b1f011/go.mod h1:b2T6verIh1bOk4xLMlvDe0Edz6juT9ObR0r/YGU8bQY=
+github.com/Contra-Culture/go2html v0.0.0-20211031174733-55849d5c7d03 h1:ynIFE6VqdtI+pq+55lCboznwS7yXPH4TeZUFXDONbxE=
+github.com/Contra-Culture/go2html v0.0.0-20211031174733-55849d5c7d03/go.mod h1:b2T6verIh1bOk4xLMlvDe0Edz6juT9ObR0r/YGU8bQY=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/fsnotify/fsnotify v1.4.7/go.mod h1:jwhsz4b93w/PPRr/qN1Yymfu8t87LnFCMoQvtojpjFo=

@@ -9,50 +9,79 @@ import (
 
 var _ = Describe("spg", func() {
 	It("works", func() {
-		Expect(New("test", "example.com", func(cfg *HostCfgr) {
-			cfg.Schema(
-				"publication",
-				func(cfg *SchemaCfgr) {
-					cfg.Attribute("title")
-					cfg.Attribute("content")
-					cfg.Attribute("published-at")
-					cfg.Attribute("author")
-					cfg.HasMany(
-						"comments",
-						func(cfg *ArrowCfgr) {
+		Expect(
+			New(
+				"test",
+				"example.com",
+				func(cfg *HostCfgr) {
+					cfg.Repo(
+						func(cfg *RepoCfgr) {
 							cfg.Schema(
-								"comment",
-								func(attrs map[string]interface{}) bool {
-									return true
+								"publication",
+								func(cfg *SchemaCfgr) {
+									cfg.PK([]string{"slug"})
+									cfg.Attribute("title")
+									cfg.Attribute("slug")
+									cfg.Attribute("rubric-slug")
+									cfg.Attribute("content")
+									cfg.Attribute("published-at")
+									cfg.Attribute("author")
+									cfg.BelongsTo(
+										"rubric",
+										func(cfg *ArrowCfgr) {
+											cfg.Schema(
+												"rubric",
+												func(self *Object, attrs map[string]interface{}) bool {
+													return true
+												})
+										})
+								})
+							cfg.Schema(
+								"rubric",
+								func(cfg *SchemaCfgr) {
+									cfg.Attribute("title")
+									cfg.HasMany(
+										"publications",
+										func(cfg *ArrowCfgr) {
+											cfg.Schema(
+												"publication",
+												func(self *Object, attrs map[string]interface{}) bool {
+													switch slug := attrs["rubric-slug"].(type) {
+													case string:
+														return self.Attr("slug") == slug
+													default:
+														return false
+													}
+												})
+										})
 								})
 						})
-				},
-			)
-			cfg.Schema(
-				"comment",
-				func(cfg *SchemaCfgr) {
-					cfg.Attribute("content")
-					cfg.Attribute("published-at")
-					cfg.Attribute("author")
-				},
-			)
-			cfg.Root(func(cfg *PageGeneratorCfgr) {
-				cfg.Schema(
-					"publication",
-					[]string{"comments"},
-					func(cfg *go2html.TemplateConfiguringProxy) {
+					cfg.Root(
+						func(cfg *PageGeneratorCfgr) {
+							cfg.Schema(
+								"publication",
+								[]string{"comments"},
+								func(cfg *go2html.TemplateConfiguringProxy) {
 
-					})
-				cfg.Layout(func(cfg *go2html.TemplateConfiguringProxy) {
+								})
+							cfg.Layout(func(cfg *go2html.TemplateConfiguringProxy) {
 
-				})
-				cfg.Screen(func(cfg *go2html.TemplateConfiguringProxy) {
+							})
+							cfg.Screen(func(cfg *go2html.TemplateConfiguringProxy) {
 
-				})
-				cfg.Page(func(cfg *PageGeneratorCfgr) {
+							})
+							cfg.PageGenerator(
+								"rubric",
+								func(cfg *PageGeneratorCfgr) {
+									cfg.Schema(
+										"rubric",
+										[]string{},
+										func(*go2html.TemplateConfiguringProxy) {
 
-				})
-			})
-		})).NotTo(BeNil())
+										},
+									)
+								})
+						})
+				})).NotTo(BeNil())
 	})
 })
