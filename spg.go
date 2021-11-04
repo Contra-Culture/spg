@@ -4,12 +4,13 @@ import "github.com/Contra-Culture/go2html"
 
 type (
 	Host struct {
-		title         string
-		host          string
-		rootGenerator *PageGenerator
-		rootNode      *Node
-		repo          *Repo
-		templates     *go2html.TemplateRegistry
+		title                          string
+		host                           string
+		rootPageGenerator              *PageGenerator
+		rootNode                       *Node
+		repo                           *Repo
+		templates                      *go2html.TemplateRegistry
+		schemaPageGeneratorPathMapping map[string][][]string
 	}
 	HostCfgr struct {
 		host     *Host
@@ -30,9 +31,10 @@ func New(t string, h string, cfg func(*HostCfgr)) *Host {
 	reg.Mkdir([]string{"associations", "itemViews"})
 	reg.Mkdir([]string{"associations", "collectionViews"})
 	host := &Host{
-		title:     t,
-		host:      h,
-		templates: reg,
+		title:                          t,
+		host:                           h,
+		templates:                      reg,
+		schemaPageGeneratorPathMapping: map[string][][]string{},
 	}
 	hostCfgr := &HostCfgr{
 		host:     host,
@@ -48,18 +50,22 @@ func New(t string, h string, cfg func(*HostCfgr)) *Host {
 	return host
 }
 func (c *HostCfgr) Root(cfg func(*PageGeneratorCfgr)) {
-	if c.host.rootGenerator != nil {
+	if c.host.rootPageGenerator != nil {
 		panic("root already defined")
 	}
 	pg := &PageGenerator{
 		name:     "root",
 		children: map[string]*PageGenerator{},
+		relativePathGenerator: func(_ *Object) []string {
+			return []string{"/"}
+		},
 	}
-	c.host.rootGenerator = pg
+	c.host.rootPageGenerator = pg
 	cfg(
 		&PageGeneratorCfgr{
-			hostCfgr: c,
 			pg:       pg,
+			path:     []string{"/"},
+			hostCfgr: c,
 		})
 }
 func (c *HostCfgr) Repo(cfg func(*RepoCfgr)) {
@@ -72,4 +78,8 @@ func (c *HostCfgr) Repo(cfg func(*RepoCfgr)) {
 		&RepoCfgr{
 			hostCfgr: c,
 		})
+}
+func (h *Host) Update(s string, attrs map[string]interface{}) {
+	//schema := r.schemas[s]
+	//objects := r.objects[s]
 }

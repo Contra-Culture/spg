@@ -32,9 +32,9 @@ type (
 		toSchema      string
 	}
 	ArrowCfgr struct {
-		hostCfgr *HostCfgr
-		arrow    *Arrow
-		view     *go2html.Template
+		schemaCfgr *SchemaCfgr
+		arrow      *Arrow
+		view       *go2html.Template
 	}
 	Repo struct {
 		schemas map[string]*Schema
@@ -47,8 +47,8 @@ type (
 		schema     *Schema
 		sha        []byte
 		updatedAt  time.Time
+		attrs      *orderedMap
 		meta       map[string]interface{}
-		attrs      map[string]string
 		embeddings map[string]interface{} // interface{} is *Object or []*Object
 	}
 )
@@ -102,8 +102,8 @@ func (c *SchemaCfgr) HasMany(n string, cfg func(*ArrowCfgr)) {
 	c.schema.arrows[n] = arrow
 	cfg(
 		&ArrowCfgr{
-			hostCfgr: c.hostCfgr,
-			arrow:    arrow,
+			schemaCfgr: c,
+			arrow:      arrow,
 		})
 }
 func (c *SchemaCfgr) HasOne(n string, cfg func(*ArrowCfgr)) {
@@ -115,8 +115,8 @@ func (c *SchemaCfgr) HasOne(n string, cfg func(*ArrowCfgr)) {
 	c.schema.arrows[n] = arrow
 	cfg(
 		&ArrowCfgr{
-			hostCfgr: c.hostCfgr,
-			arrow:    arrow,
+			schemaCfgr: c,
+			arrow:      arrow,
 		})
 }
 func (c *SchemaCfgr) HasManyThrough(n string, cfg func(*ArrowCfgr)) {
@@ -128,8 +128,8 @@ func (c *SchemaCfgr) HasManyThrough(n string, cfg func(*ArrowCfgr)) {
 	c.schema.arrows[n] = arrow
 	cfg(
 		&ArrowCfgr{
-			hostCfgr: c.hostCfgr,
-			arrow:    arrow,
+			schemaCfgr: c,
+			arrow:      arrow,
 		})
 }
 func (c *SchemaCfgr) HasOneThrough(n string, cfg func(*ArrowCfgr)) {
@@ -141,8 +141,8 @@ func (c *SchemaCfgr) HasOneThrough(n string, cfg func(*ArrowCfgr)) {
 	c.schema.arrows[n] = arrow
 	cfg(
 		&ArrowCfgr{
-			hostCfgr: c.hostCfgr,
-			arrow:    arrow,
+			schemaCfgr: c,
+			arrow:      arrow,
 		})
 }
 func (c *SchemaCfgr) BelongsTo(n string, cfg func(*ArrowCfgr)) {
@@ -154,8 +154,8 @@ func (c *SchemaCfgr) BelongsTo(n string, cfg func(*ArrowCfgr)) {
 	c.schema.arrows[n] = arrow
 	cfg(
 		&ArrowCfgr{
-			hostCfgr: c.hostCfgr,
-			arrow:    arrow,
+			schemaCfgr: c,
+			arrow:      arrow,
 		})
 }
 func (c *SchemaCfgr) FullView(cfg func(*go2html.TemplateConfiguringProxy)) {
@@ -195,31 +195,28 @@ func (s *Schema) LinkView() []string {
 	return []string{"schemas", "linkViews", s.name}
 }
 func (c *ArrowCfgr) Schema(n string, mapper func(*Object, map[string]interface{}) bool) {
-	if c.arrow.mapper != nil {
-		panic("mapper already defined")
-	}
-	c.hostCfgr.checkers = append(
-		c.hostCfgr.checkers,
+	c.arrow.mapper = mapper
+	c.arrow.toSchema = n
+	hostCfgr := c.schemaCfgr.hostCfgr
+	hostCfgr.checkers = append(
+		hostCfgr.checkers,
 		func() error {
-			_, ok := c.hostCfgr.host.repo.schemas[n]
+			_, ok := hostCfgr.host.repo.schemas[n]
 			if ok {
 				return nil
 			}
 			return fmt.Errorf("wrong schema name `%s`", n)
 		})
-
-	c.arrow.mapper = mapper
-	//	c.arrow.toSchema = schema
 }
 func (c *ArrowCfgr) ItemView(cfg func(*go2html.TemplateConfiguringProxy)) {
 	path := c.arrow.CollectionView()
 	template := go2html.NewTemplate(path[len(path)-1], cfg)
-	c.hostCfgr.host.templates.Add(template, path)
+	c.schemaCfgr.hostCfgr.host.templates.Add(template, path)
 }
 func (c *ArrowCfgr) CollectionView(cfg func(*go2html.TemplateConfiguringProxy)) {
 	path := c.arrow.CollectionView()
 	template := go2html.NewTemplate(path[len(path)-1], cfg)
-	c.hostCfgr.host.templates.Add(template, path)
+	c.schemaCfgr.hostCfgr.host.templates.Add(template, path)
 }
 func (a *Arrow) ItemView() []string {
 	name := fmt.Sprintf(
@@ -240,5 +237,5 @@ func (a *Arrow) CollectionView() []string {
 	return []string{"associations", "collectionViews", name}
 }
 func (o *Object) Attr(n string) string {
-	return o.attrs[n]
+	return o.attrs.data[n]
 }
