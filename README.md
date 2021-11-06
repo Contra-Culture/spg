@@ -1,5 +1,7 @@
 # spg - static pages generator
 
+Think about **spg** like about Ruby on Rails, but for static sites and written in Golang.
+
 ![model](doc/model.png "model")
 
 ## Purpose
