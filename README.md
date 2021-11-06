@@ -20,6 +20,7 @@ Generate static sites using templates.
 - - - - ListItemView
 - - - - CardView
 - - - - LinkView
+- - - - PageGenerator
 - - - - Arrow
 - - - - - CollectionView
 - - - - - ItemView

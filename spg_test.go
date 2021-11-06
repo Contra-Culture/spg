@@ -5,6 +5,7 @@ import (
 
 	"github.com/Contra-Culture/go2html"
 	. "github.com/Contra-Culture/spg"
+	"github.com/Contra-Culture/spg/data"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
@@ -17,26 +18,26 @@ var _ = Describe("spg", func() {
 				"example.com",
 				func(cfg *HostCfgr) {
 					cfg.Repo(
-						func(cfg *RepoCfgr) {
+						func(cfg *data.GraphCfgr) {
 							cfg.Schema(
 								"author",
-								func(cfg *SchemaCfgr) {
+								func(cfg *data.SchemaCfgr) {
 									cfg.Attribute("full-name")
 									cfg.Attribute("slug")
 									cfg.Attribute("bio")
 									cfg.HasMany(
 										"publications",
-										func(cfg *ArrowCfgr) {
+										func(cfg *data.ArrowCfgr) {
 											cfg.Schema(
 												"publication",
-												func(self *Object, attrs map[string]interface{}) bool {
+												func(self *data.Object, attrs map[string]interface{}) bool {
 													return true
 												})
 										})
 								})
 							cfg.Schema(
 								"publication",
-								func(cfg *SchemaCfgr) {
+								func(cfg *data.SchemaCfgr) {
 									cfg.PK([]string{"slug"})
 									cfg.Attribute("title")
 									cfg.Attribute("slug")
@@ -46,10 +47,10 @@ var _ = Describe("spg", func() {
 									cfg.Attribute("published-at")
 									cfg.BelongsTo(
 										"author",
-										func(cfg *ArrowCfgr) {
+										func(cfg *data.ArrowCfgr) {
 											cfg.Schema(
 												"author",
-												func(self *Object, attrs map[string]interface{}) bool {
+												func(self *data.Object, attrs map[string]interface{}) bool {
 													switch authorName := attrs["full-name"].(type) {
 													case string:
 														return self.Attr("author-name") == authorName
@@ -60,10 +61,10 @@ var _ = Describe("spg", func() {
 										})
 									cfg.BelongsTo(
 										"rubric",
-										func(cfg *ArrowCfgr) {
+										func(cfg *data.ArrowCfgr) {
 											cfg.Schema(
 												"rubric",
-												func(self *Object, attrs map[string]interface{}) bool {
+												func(self *data.Object, attrs map[string]interface{}) bool {
 													switch slug := attrs["slug"].(type) {
 													case string:
 														return self.Attr("rubric-slug") == slug
@@ -75,14 +76,14 @@ var _ = Describe("spg", func() {
 								})
 							cfg.Schema(
 								"rubric",
-								func(cfg *SchemaCfgr) {
+								func(cfg *data.SchemaCfgr) {
 									cfg.Attribute("title")
 									cfg.HasMany(
 										"publications",
-										func(cfg *ArrowCfgr) {
+										func(cfg *data.ArrowCfgr) {
 											cfg.Schema(
 												"publication",
-												func(self *Object, attrs map[string]interface{}) bool {
+												func(self *data.Object, attrs map[string]interface{}) bool {
 													switch slug := attrs["rubric-slug"].(type) {
 													case string:
 														return self.Attr("slug") == slug
@@ -119,7 +120,7 @@ var _ = Describe("spg", func() {
 
 										})
 									cfg.RelativePathGenerator(
-										func(o *Object) []string {
+										func(o *data.Object) []string {
 											title := o.Attr("title")
 											title = strings.NewReplacer(" ", "-", "&", "-and-", "?", "").Replace(title)
 											return []string{"rubric", title}
@@ -135,7 +136,7 @@ var _ = Describe("spg", func() {
 
 										})
 									cfg.RelativePathGenerator(
-										func(o *Object) []string {
+										func(o *data.Object) []string {
 											title := o.Attr("title")
 											title = strings.NewReplacer(" ", "-", "&", "-and-", "?", "").Replace(title)
 											return []string{"publication", title}
