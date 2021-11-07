@@ -3,14 +3,15 @@ package spg
 import (
 	"github.com/Contra-Culture/go2html"
 	"github.com/Contra-Culture/spg/data"
+	"github.com/Contra-Culture/spg/gennode"
 )
 
 type (
 	Host struct {
 		title                          string
 		host                           string
-		rootPageGenerator              *PageGenerator
-		rootNode                       *Node
+		rootNode                       *gennode.Node
+		prepared                       *Node
 		graph                          *data.Graph
 		templates                      *go2html.TemplateRegistry
 		schemaPageGeneratorPathMapping map[string][][]string
@@ -52,37 +53,31 @@ func New(t string, h string, cfg func(*HostCfgr)) *Host {
 	}
 	return host
 }
-func (c *HostCfgr) Root(cfg func(*PageGeneratorCfgr)) {
-	if c.host.rootPageGenerator != nil {
+func (c *HostCfgr) Root(cfg func(*gennode.NodeCfgr)) {
+	if c.host.rootNode != nil {
 		panic("root already defined")
 	}
-	pg := &PageGenerator{
-		name:     "root",
-		children: map[string]*PageGenerator{},
-		relativePathGenerator: func(_ *data.Object) []string {
-			return []string{"/"}
+	c.host.rootNode = gennode.New(
+		func(cfg *gennode.NodeCfgr) {
+			cfg.RelativePathGenerator(
+				func(_ *data.Object) []string {
+					return []string{"/"}
+				})
 		},
-	}
-	c.host.rootPageGenerator = pg
-	cfg(
-		&PageGeneratorCfgr{
-			pg:       pg,
-			path:     []string{"/"},
-			hostCfgr: c,
-		})
+		cfg)
 }
 func (c *HostCfgr) Repo(cfg func(*data.GraphCfgr)) {
 	c.host.graph = data.New(cfg)
 }
 func (h *Host) Update(s string, attrs map[string]interface{}) {
-	//schema := r.schemas[s]
-	//objects := r.objects[s]
+	// schema := r.schemas[s]
+	// objects := r.objects[s]
 }
 func (h *Host) Get(path []string) *Page {
 	if len(path) == 1 && path[0] == "/" {
-		return h.rootNode.page
+		return h.prepared.page
 	}
-	node := h.rootNode
+	node := h.prepared
 	var ok bool
 	for _, chunk := range path[1:] {
 		node, ok = node.children[chunk]

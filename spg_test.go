@@ -3,9 +3,9 @@ package spg_test
 import (
 	"strings"
 
-	"github.com/Contra-Culture/go2html"
 	. "github.com/Contra-Culture/spg"
 	"github.com/Contra-Culture/spg/data"
+	"github.com/Contra-Culture/spg/gennode"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
@@ -95,30 +95,19 @@ var _ = Describe("spg", func() {
 								})
 						})
 					cfg.Root(
-						func(cfg *PageGeneratorCfgr) {
+						func(cfg *gennode.NodeCfgr) {
 							cfg.Schema(
 								"publication",
 								[]string{"rubric", "author"},
-								func(cfg *go2html.TemplateConfiguringProxy) {
-
-								})
-							cfg.Layout(
-								func(cfg *go2html.TemplateConfiguringProxy) {
-
-								})
-							cfg.Screen(
-								func(cfg *go2html.TemplateConfiguringProxy) {
-
-								})
-							cfg.PageGenerator(
+							)
+							cfg.Layout([]string{})
+							cfg.Screen([]string{})
+							cfg.Node(
 								"rubric",
-								func(cfg *PageGeneratorCfgr) {
+								func(cfg *gennode.NodeCfgr) {
 									cfg.Schema(
 										"rubric",
-										[]string{},
-										func(*go2html.TemplateConfiguringProxy) {
-
-										})
+										[]string{})
 									cfg.RelativePathGenerator(
 										func(o *data.Object) []string {
 											title := o.Attr("title")
@@ -126,15 +115,12 @@ var _ = Describe("spg", func() {
 											return []string{"rubric", title}
 										})
 								})
-							cfg.PageGenerator(
+							cfg.Node(
 								"publication",
-								func(cfg *PageGeneratorCfgr) {
+								func(cfg *gennode.NodeCfgr) {
 									cfg.Schema(
 										"publication",
-										[]string{"rubric", "author"},
-										func(cfg *go2html.TemplateConfiguringProxy) {
-
-										})
+										[]string{"rubric", "author"})
 									cfg.RelativePathGenerator(
 										func(o *data.Object) []string {
 											title := o.Attr("title")
