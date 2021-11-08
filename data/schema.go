@@ -2,15 +2,23 @@ package data
 
 type (
 	Schema struct {
-		name              string
-		pk                []string
-		attributes        []string
-		arrows            map[string]*Arrow
-		pageGeneratorPath []string
+		name         string
+		pk           []string
+		attributes   []string
+		associations map[string]*Association
 	}
 	SchemaCfgr struct {
-		graph  *Graph
-		schema *Schema
+		graphCfgr *GraphCfgr
+		schema    *Schema
+	}
+	Association struct {
+		name             string
+		hostSchema       string
+		remoteSchema     string
+		proxyAssociation string
+		limit            int
+		orderer          func([]*Object) []*Object
+		mapper           func(*Object, map[string]interface{}) bool
 	}
 )
 
@@ -25,68 +33,19 @@ func (c *SchemaCfgr) Attribute(n string) {
 	}
 	c.schema.attributes = append(c.schema.attributes, n)
 }
-func (c *SchemaCfgr) HasMany(n string, cfg func(*ArrowCfgr)) {
-	arrow := &Arrow{
-		name:       n,
-		kind:       hasMANY,
-		fromSchema: c.schema.name,
+func (c *SchemaCfgr) Association(
+	n, rn, pa string,
+	l int,
+	orderer func([]*Object) []*Object,
+	mapper func(*Object, map[string]interface{}) bool,
+) {
+	c.schema.associations[n] = &Association{
+		name:             n,
+		hostSchema:       c.schema.name,
+		remoteSchema:     rn,
+		proxyAssociation: pa,
+		limit:            l,
+		orderer:          orderer,
+		mapper:           mapper,
 	}
-	c.schema.arrows[n] = arrow
-	cfg(
-		&ArrowCfgr{
-			schemaCfgr: c,
-			arrow:      arrow,
-		})
-}
-func (c *SchemaCfgr) HasOne(n string, cfg func(*ArrowCfgr)) {
-	arrow := &Arrow{
-		name:       n,
-		kind:       hasONE,
-		fromSchema: c.schema.name,
-	}
-	c.schema.arrows[n] = arrow
-	cfg(
-		&ArrowCfgr{
-			schemaCfgr: c,
-			arrow:      arrow,
-		})
-}
-func (c *SchemaCfgr) HasManyThrough(n string, cfg func(*ArrowCfgr)) {
-	arrow := &Arrow{
-		name:       n,
-		kind:       hasMANY_THROUGH,
-		fromSchema: c.schema.name,
-	}
-	c.schema.arrows[n] = arrow
-	cfg(
-		&ArrowCfgr{
-			schemaCfgr: c,
-			arrow:      arrow,
-		})
-}
-func (c *SchemaCfgr) HasOneThrough(n string, cfg func(*ArrowCfgr)) {
-	arrow := &Arrow{
-		name:       n,
-		kind:       hasONE_THROUGH,
-		fromSchema: c.schema.name,
-	}
-	c.schema.arrows[n] = arrow
-	cfg(
-		&ArrowCfgr{
-			schemaCfgr: c,
-			arrow:      arrow,
-		})
-}
-func (c *SchemaCfgr) BelongsTo(n string, cfg func(*ArrowCfgr)) {
-	arrow := &Arrow{
-		name:       n,
-		kind:       belongsTO,
-		fromSchema: c.schema.name,
-	}
-	c.schema.arrows[n] = arrow
-	cfg(
-		&ArrowCfgr{
-			schemaCfgr: c,
-			arrow:      arrow,
-		})
 }

@@ -23,17 +23,17 @@ func New(cfg func(*GraphCfgr)) *Graph {
 }
 func (c *GraphCfgr) Schema(n string, cfg func(*SchemaCfgr)) {
 	schema := &Schema{
-		name:       n,
-		pk:         []string{},
-		attributes: []string{},
-		arrows:     map[string]*Arrow{},
+		name:         n,
+		pk:           []string{},
+		attributes:   []string{},
+		associations: map[string]interface{}{},
 	}
 	c.graph.schemas[n] = schema
 	c.graph.objects[n] = map[string]interface{}{}
 	cfg(
 		&SchemaCfgr{
-			graph:  c.graph,
-			schema: schema,
+			graphCfgr: c,
+			schema:    schema,
 		})
 }
 func (g *Graph) Update(s string, attrs map[string]interface{}) {
