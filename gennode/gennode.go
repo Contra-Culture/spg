@@ -9,7 +9,7 @@ type (
 		layout     []string
 		screen     []string
 		mainSchema string
-		schemas    map[string]interface{} // interface{} is []string or map[string]interface{}
+		schemas    map[string]interface{} // interface{} is nil, []string or map[string]interface{}
 		path       interface{}            // []string or func(*data.Object) []string
 		children   map[string]*Node
 	}
@@ -24,6 +24,7 @@ func New(cfgs ...func(*NodeCfgr)) *Node {
 	var (
 		node = &Node{
 			children: map[string]*Node{},
+			schemas:  map[string]interface{}{},
 			path: func(_ *data.Object) []string {
 				return []string{"/"}
 			},
@@ -41,6 +42,7 @@ func New(cfgs ...func(*NodeCfgr)) *Node {
 func (c *NodeCfgr) Node(key string, cfg func(*NodeCfgr)) {
 	node := &Node{
 		children: map[string]*Node{},
+		schemas:  map[string]interface{}{},
 	}
 	cfg(
 		&NodeCfgr{

@@ -98,7 +98,10 @@ var _ = Describe("spg", func() {
 						func(cfg *gennode.NodeCfgr) {
 							cfg.Schema(
 								"publication",
-								[]string{"rubric", "author"},
+								map[string]interface{}{
+									"rubric": nil,
+									"author": nil,
+								},
 							)
 							cfg.Layout([]string{})
 							cfg.Screen([]string{})
@@ -107,7 +110,7 @@ var _ = Describe("spg", func() {
 								func(cfg *gennode.NodeCfgr) {
 									cfg.Schema(
 										"rubric",
-										[]string{})
+										map[string]interface{}{})
 									cfg.Path(
 										func(o *data.Object) []string {
 											title := o.Attr("title")
@@ -120,7 +123,10 @@ var _ = Describe("spg", func() {
 								func(cfg *gennode.NodeCfgr) {
 									cfg.Schema(
 										"publication",
-										[]string{"rubric", "author"})
+										map[string]interface{}{
+											"rubric": nil,
+											"author": nil,
+										})
 									cfg.Path(
 										func(o *data.Object) []string {
 											title := o.Attr("title")
