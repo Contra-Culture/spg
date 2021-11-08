@@ -25,14 +25,14 @@ var _ = Describe("spg", func() {
 									cfg.Attribute("full-name")
 									cfg.Attribute("slug")
 									cfg.Attribute("bio")
-									cfg.HasMany(
+									cfg.Association(
 										"publications",
-										func(cfg *data.ArrowCfgr) {
-											cfg.Schema(
-												"publication",
-												func(self *data.Object, attrs map[string]interface{}) bool {
-													return true
-												})
+										"publication",
+										"",
+										0,
+										nil,
+										func(self *data.Object, attrs map[string]interface{}) bool {
+											return true
 										})
 								})
 							cfg.Schema(
@@ -45,52 +45,52 @@ var _ = Describe("spg", func() {
 									cfg.Attribute("content")
 									cfg.Attribute("author-name")
 									cfg.Attribute("published-at")
-									cfg.BelongsTo(
-										"author",
-										func(cfg *data.ArrowCfgr) {
-											cfg.Schema(
-												"author",
-												func(self *data.Object, attrs map[string]interface{}) bool {
-													switch authorName := attrs["full-name"].(type) {
-													case string:
-														return self.Attr("author-name") == authorName
-													default:
-														return false
-													}
-												})
+									cfg.Association(
+										"authors",
+										"user",
+										"",
+										0,
+										nil,
+										func(self *data.Object, attrs map[string]interface{}) bool {
+											switch authorName := attrs["full-name"].(type) {
+											case string:
+												return self.Attr("author-name") == authorName
+											default:
+												return false
+											}
 										})
-									cfg.BelongsTo(
+									cfg.Association(
 										"rubric",
-										func(cfg *data.ArrowCfgr) {
-											cfg.Schema(
-												"rubric",
-												func(self *data.Object, attrs map[string]interface{}) bool {
-													switch slug := attrs["slug"].(type) {
-													case string:
-														return self.Attr("rubric-slug") == slug
-													default:
-														return false
-													}
-												})
+										"rubric",
+										"",
+										1,
+										nil,
+										func(self *data.Object, attrs map[string]interface{}) bool {
+											switch slug := attrs["slug"].(type) {
+											case string:
+												return self.Attr("rubric-slug") == slug
+											default:
+												return false
+											}
 										})
 								})
 							cfg.Schema(
 								"rubric",
 								func(cfg *data.SchemaCfgr) {
 									cfg.Attribute("title")
-									cfg.HasMany(
+									cfg.Association(
 										"publications",
-										func(cfg *data.ArrowCfgr) {
-											cfg.Schema(
-												"publication",
-												func(self *data.Object, attrs map[string]interface{}) bool {
-													switch slug := attrs["rubric-slug"].(type) {
-													case string:
-														return self.Attr("slug") == slug
-													default:
-														return false
-													}
-												})
+										"publication",
+										"",
+										0,
+										nil,
+										func(self *data.Object, attrs map[string]interface{}) bool {
+											switch slug := attrs["rubric-slug"].(type) {
+											case string:
+												return self.Attr("slug") == slug
+											default:
+												return false
+											}
 										})
 								})
 						})

@@ -26,7 +26,7 @@ func (c *GraphCfgr) Schema(n string, cfg func(*SchemaCfgr)) {
 		name:         n,
 		pk:           []string{},
 		attributes:   []string{},
-		associations: map[string]interface{}{},
+		associations: map[string]*Association{},
 	}
 	c.graph.schemas[n] = schema
 	c.graph.objects[n] = map[string]interface{}{}
