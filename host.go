@@ -8,17 +8,17 @@ import (
 
 type (
 	Host struct {
-		title                          string
-		host                           string
-		rootNode                       *gennode.Node
-		prepared                       *Node
-		graph                          *data.Graph
-		templates                      *go2html.TemplateRegistry
-		schemaPageGeneratorPathMapping map[string][][]string
+		title     string
+		host      string
+		rootNode  *gennode.Node
+		prepared  *Node
+		dataGraph *data.Graph
+		templates *go2html.TemplateRegistry
 	}
 	HostCfgr struct {
 		host     *Host
 		checkers []func() error
+		err      string
 	}
 )
 
@@ -35,10 +35,9 @@ func New(t string, h string, cfg func(*HostCfgr)) *Host {
 	reg.Mkdir([]string{"associations", "itemViews"})
 	reg.Mkdir([]string{"associations", "collectionViews"})
 	host := &Host{
-		title:                          t,
-		host:                           h,
-		templates:                      reg,
-		schemaPageGeneratorPathMapping: map[string][][]string{},
+		title:     t,
+		host:      h,
+		templates: reg,
 	}
 	hostCfgr := &HostCfgr{
 		host:     host,
@@ -54,20 +53,24 @@ func New(t string, h string, cfg func(*HostCfgr)) *Host {
 	return host
 }
 func (c *HostCfgr) Root(cfg func(*gennode.NodeCfgr)) {
+	if c.err != "" {
+		return
+	}
 	if c.host.rootNode != nil {
-		panic("root already defined")
+		c.err = "root is already specified"
+		return
 	}
 	c.host.rootNode = gennode.New(
 		func(cfg *gennode.NodeCfgr) {
-			cfg.RelativePathGenerator(
+			cfg.Path(
 				func(_ *data.Object) []string {
 					return []string{"/"}
 				})
 		},
 		cfg)
 }
-func (c *HostCfgr) Repo(cfg func(*data.GraphCfgr)) {
-	c.host.graph = data.New(cfg)
+func (c *HostCfgr) DataGraph(cfg func(*data.GraphCfgr)) {
+	c.host.dataGraph = data.New(cfg)
 }
 func (h *Host) Update(s string, attrs map[string]interface{}) {
 	// schema := r.schemas[s]

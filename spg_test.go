@@ -17,7 +17,7 @@ var _ = Describe("spg", func() {
 				"test",
 				"example.com",
 				func(cfg *HostCfgr) {
-					cfg.Repo(
+					cfg.DataGraph(
 						func(cfg *data.GraphCfgr) {
 							cfg.Schema(
 								"author",
@@ -108,7 +108,7 @@ var _ = Describe("spg", func() {
 									cfg.Schema(
 										"rubric",
 										[]string{})
-									cfg.RelativePathGenerator(
+									cfg.Path(
 										func(o *data.Object) []string {
 											title := o.Attr("title")
 											title = strings.NewReplacer(" ", "-", "&", "-and-", "?", "").Replace(title)
@@ -121,7 +121,7 @@ var _ = Describe("spg", func() {
 									cfg.Schema(
 										"publication",
 										[]string{"rubric", "author"})
-									cfg.RelativePathGenerator(
+									cfg.Path(
 										func(o *data.Object) []string {
 											title := o.Attr("title")
 											title = strings.NewReplacer(" ", "-", "&", "-and-", "?", "").Replace(title)

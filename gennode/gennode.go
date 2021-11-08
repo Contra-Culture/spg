@@ -1,21 +1,22 @@
 package gennode
 
 import (
-	"github.com/Contra-Culture/go2html"
 	"github.com/Contra-Culture/spg/data"
 )
 
 type (
 	Node struct {
-		layout                *go2html.Template
-		screen                *go2html.Template
-		schemas               []string
-		relativePathGenerator func(*data.Object) []string
-		children              map[string]*Node
+		layout     []string
+		screen     []string
+		mainSchema string
+		schemas    map[string]interface{} // interface{} is []string or map[string]interface{}
+		path       interface{}            // []string or func(*data.Object) []string
+		children   map[string]*Node
 	}
 	NodeCfgr struct {
 		key  string
 		node *Node
+		err  string
 	}
 )
 
@@ -23,7 +24,7 @@ func New(cfgs ...func(*NodeCfgr)) *Node {
 	var (
 		node = &Node{
 			children: map[string]*Node{},
-			relativePathGenerator: func(_ *data.Object) []string {
+			path: func(_ *data.Object) []string {
 				return []string{"/"}
 			},
 		}
@@ -48,17 +49,60 @@ func (c *NodeCfgr) Node(key string, cfg func(*NodeCfgr)) {
 		})
 	c.node.children[key] = node
 }
-func (c *NodeCfgr) RelativePathGenerator(fn func(*data.Object) []string) {
-	c.node.relativePathGenerator = fn
+func (c *NodeCfgr) Path(rawPath interface{}) {
+	if c.err != "" {
+		return
+	}
+	if c.node.path != nil {
+		c.err = "path is already specified"
+		return
+	}
+	switch path := rawPath.(type) {
+	case []string:
+		c.node.path = path
+	case func(*data.Object) []string:
+		c.node.path = path
+	default:
+		c.err = "wrong path, should be of type []string or func(data.Object)[]string"
+	}
 }
 func (c *NodeCfgr) Layout(path []string) {
+	if c.err != "" {
+		return
+	}
+	if c.node.layout != nil {
+		c.err = "layout is already specified"
+		return
+	}
+	c.node.layout = path
 }
 func (c *NodeCfgr) Screen(path []string) {
-
+	if c.err != "" {
+		return
+	}
+	if c.node.screen != nil {
+		c.err = "screen is already specified"
+		return
+	}
+	c.node.screen = path
 }
 func (c *NodeCfgr) MainSchema(n string) {
-
+	if c.err != "" {
+		return
+	}
+	if c.node.mainSchema != "" {
+		c.err = "main schema is already specified"
+		return
+	}
+	c.node.mainSchema = n
 }
-func (c *NodeCfgr) Schema(n string, arrows []string) {
-	c.node.schemas = append(c.node.schemas, n)
+func (c *NodeCfgr) Schema(n string, arrows map[string]interface{}) {
+	if c.err != "" {
+		return
+	}
+	if c.node.mainSchema != "" {
+		c.err = "main schema is already specified"
+		return
+	}
+	c.node.schemas[n] = arrows
 }
