@@ -1,6 +1,10 @@
 package data
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/Contra-Culture/spg/report"
+)
 
 type (
 	Schema struct {
@@ -12,6 +16,7 @@ type (
 	SchemaCfgr struct {
 		graphCfgr *GraphCfgr
 		schema    *Schema
+		report    *report.RContext
 	}
 	Arrow struct {
 		limit        int
@@ -25,6 +30,7 @@ type (
 	ArrowCfgr struct {
 		arrow      *Arrow
 		schemaCfgr *SchemaCfgr
+		report     *report.RContext
 	}
 )
 
@@ -34,9 +40,7 @@ func (c *SchemaCfgr) ID(id []string) {
 func (c *SchemaCfgr) Attribute(n string) {
 	_, exists := c.schema.attributes[n]
 	if exists {
-		c.graphCfgr.errors = append(
-			c.graphCfgr.errors,
-			fmt.Errorf("attribute %s.%s already specified", c.schema.name, n))
+		c.report.Error(fmt.Sprintf("attribute %s.%s already specified", c.schema.name, n))
 		return
 	}
 	c.schema.attributes[n] = true
@@ -44,9 +48,7 @@ func (c *SchemaCfgr) Attribute(n string) {
 func (c *SchemaCfgr) Arrow(n, rn string, cfg func(*ArrowCfgr)) {
 	_, exists := c.schema.arrows[n]
 	if exists {
-		c.graphCfgr.errors = append(
-			c.graphCfgr.errors,
-			fmt.Errorf("arrow %s>-%s->... already specified", c.schema.name, n))
+		c.report.Error(fmt.Sprintf("arrow %s>-%s->... already specified", c.schema.name, n))
 		return
 	}
 	arrow := &Arrow{
@@ -58,15 +60,15 @@ func (c *SchemaCfgr) Arrow(n, rn string, cfg func(*ArrowCfgr)) {
 		&ArrowCfgr{
 			arrow:      arrow,
 			schemaCfgr: c,
+			report:     c.report.Context(fmt.Sprintf("arrow: %s", n)),
 		})
 	c.schema.arrows[n] = arrow
 }
 
 func (c *ArrowCfgr) MapWith(m map[string]string) {
 	if c.arrow.mapping != nil {
-		c.schemaCfgr.graphCfgr.errors = append(
-			c.schemaCfgr.graphCfgr.errors,
-			fmt.Errorf(
+		c.schemaCfgr.report.Error(
+			fmt.Sprintf(
 				"%s>-%s->%s attributes mapping already specified",
 				c.arrow.hostSchema,
 				c.arrow.name,
@@ -77,9 +79,8 @@ func (c *ArrowCfgr) MapWith(m map[string]string) {
 }
 func (c *ArrowCfgr) RemoteArrow(n string) {
 	if len(c.arrow.remoteArrow) > 0 {
-		c.schemaCfgr.graphCfgr.errors = append(
-			c.schemaCfgr.graphCfgr.errors,
-			fmt.Errorf(
+		c.schemaCfgr.report.Error(
+			fmt.Sprintf(
 				"%s>-%s->%s remote arrow already specified",
 				c.arrow.hostSchema,
 				c.arrow.name,
@@ -90,9 +91,8 @@ func (c *ArrowCfgr) RemoteArrow(n string) {
 }
 func (c *ArrowCfgr) Limit(l int) {
 	if c.arrow.limit > 0 {
-		c.schemaCfgr.graphCfgr.errors = append(
-			c.schemaCfgr.graphCfgr.errors,
-			fmt.Errorf(
+		c.schemaCfgr.report.Error(
+			fmt.Sprintf(
 				"%s>-%s->%s limit already specified",
 				c.arrow.hostSchema,
 				c.arrow.name,
@@ -103,9 +103,8 @@ func (c *ArrowCfgr) Limit(l int) {
 }
 func (c *ArrowCfgr) CounterCache(n string) {
 	if len(c.arrow.counterCache) > 0 {
-		c.schemaCfgr.graphCfgr.errors = append(
-			c.schemaCfgr.graphCfgr.errors,
-			fmt.Errorf(
+		c.schemaCfgr.report.Error(
+			fmt.Sprintf(
 				"%s>-%s->%s counter-cache attribute already specified",
 				c.arrow.hostSchema,
 				c.arrow.name,

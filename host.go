@@ -1,11 +1,10 @@
 package spg
 
 import (
-	"errors"
-
 	"github.com/Contra-Culture/go2html"
 	"github.com/Contra-Culture/spg/data"
 	"github.com/Contra-Culture/spg/gennode"
+	"github.com/Contra-Culture/spg/report"
 )
 
 type (
@@ -20,7 +19,7 @@ type (
 	HostCfgr struct {
 		host     *Host
 		checkers []func() error
-		err      error
+		report   *report.RContext
 	}
 )
 
@@ -44,6 +43,7 @@ func New(t string, h string, cfg func(*HostCfgr)) *Host {
 	hostCfgr := &HostCfgr{
 		host:     host,
 		checkers: []func() error{},
+		report:   report.New("host configuring"),
 	}
 	cfg(hostCfgr)
 	for _, check := range hostCfgr.checkers {
@@ -55,11 +55,8 @@ func New(t string, h string, cfg func(*HostCfgr)) *Host {
 	return host
 }
 func (c *HostCfgr) Root(cfg func(*gennode.NodeCfgr)) {
-	if c.err != nil {
-		return
-	}
 	if c.host.rootNode != nil {
-		c.err = errors.New("root is already specified")
+		c.report.Error("root is already specified")
 		return
 	}
 	c.host.rootNode = gennode.New(
@@ -72,13 +69,11 @@ func (c *HostCfgr) Root(cfg func(*gennode.NodeCfgr)) {
 		cfg)
 }
 func (c *HostCfgr) DataGraph(cfg func(*data.GraphCfgr)) {
-	dg, err := data.New(cfg)
-	if err != nil {
-		c.err = err
-
+	if c.host.dataGraph != nil {
+		c.report.Error("root is already specified")
 		return
 	}
-	c.host.dataGraph = dg
+	c.host.dataGraph = data.New(c.report.Context("data-graph"), cfg)
 }
 func (h *Host) Update(s string, attrs map[string]interface{}) {
 	// schema := r.schemas[s]
