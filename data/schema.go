@@ -2,28 +2,25 @@ package data
 
 type (
 	Schema struct {
-		name         string
-		pk           []string
-		attributes   []string
-		associations map[string]*Association
+		name       string
+		id         []string
+		attributes []string
+		arrows     map[string]*Arrow
 	}
 	SchemaCfgr struct {
 		graphCfgr *GraphCfgr
 		schema    *Schema
 	}
-	Association struct {
-		name             string
-		hostSchema       string
-		remoteSchema     string
-		proxyAssociation string
-		limit            int
-		orderer          func([]*Object) []*Object
-		mapper           func(*Object, map[string]interface{}) bool
+	Arrow struct {
+		name              string
+		hostSchema        string
+		remoteSchema      string
+		attributesMapping map[string]string
 	}
 )
 
-func (c *SchemaCfgr) PK(pk []string) {
-	c.schema.pk = pk
+func (c *SchemaCfgr) ID(id []string) {
+	c.schema.id = id
 }
 func (c *SchemaCfgr) Attribute(n string) {
 	for _, a := range c.schema.attributes {
@@ -33,19 +30,15 @@ func (c *SchemaCfgr) Attribute(n string) {
 	}
 	c.schema.attributes = append(c.schema.attributes, n)
 }
-func (c *SchemaCfgr) Association(
-	n, rn, pa string,
+func (c *SchemaCfgr) Arrow(
+	n, rn string,
 	l int,
-	orderer func([]*Object) []*Object,
-	mapper func(*Object, map[string]interface{}) bool,
+	mapping map[string]string,
 ) {
-	c.schema.associations[n] = &Association{
-		name:             n,
-		hostSchema:       c.schema.name,
-		remoteSchema:     rn,
-		proxyAssociation: pa,
-		limit:            l,
-		orderer:          orderer,
-		mapper:           mapper,
+	c.schema.arrows[n] = &Arrow{
+		name:              n,
+		hostSchema:        c.schema.name,
+		remoteSchema:      rn,
+		attributesMapping: mapping,
 	}
 }

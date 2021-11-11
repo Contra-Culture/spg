@@ -1,6 +1,8 @@
 package spg
 
 import (
+	"errors"
+
 	"github.com/Contra-Culture/go2html"
 	"github.com/Contra-Culture/spg/data"
 	"github.com/Contra-Culture/spg/gennode"
@@ -18,7 +20,7 @@ type (
 	HostCfgr struct {
 		host     *Host
 		checkers []func() error
-		err      string
+		err      error
 	}
 )
 
@@ -53,11 +55,11 @@ func New(t string, h string, cfg func(*HostCfgr)) *Host {
 	return host
 }
 func (c *HostCfgr) Root(cfg func(*gennode.NodeCfgr)) {
-	if c.err != "" {
+	if c.err != nil {
 		return
 	}
 	if c.host.rootNode != nil {
-		c.err = "root is already specified"
+		c.err = errors.New("root is already specified")
 		return
 	}
 	c.host.rootNode = gennode.New(
@@ -70,7 +72,13 @@ func (c *HostCfgr) Root(cfg func(*gennode.NodeCfgr)) {
 		cfg)
 }
 func (c *HostCfgr) DataGraph(cfg func(*data.GraphCfgr)) {
-	c.host.dataGraph = data.New(cfg)
+	dg, err := data.New(cfg)
+	if err != nil {
+		c.err = err
+
+		return
+	}
+	c.host.dataGraph = dg
 }
 func (h *Host) Update(s string, attrs map[string]interface{}) {
 	// schema := r.schemas[s]

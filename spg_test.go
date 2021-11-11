@@ -25,73 +25,42 @@ var _ = Describe("spg", func() {
 									cfg.Attribute("full-name")
 									cfg.Attribute("slug")
 									cfg.Attribute("bio")
-									cfg.Association(
+									cfg.Arrow(
 										"publications",
 										"publication",
-										"",
 										0,
-										nil,
-										func(self *data.Object, attrs map[string]interface{}) bool {
-											return true
-										})
+										map[string]string{})
 								})
 							cfg.Schema(
 								"publication",
 								func(cfg *data.SchemaCfgr) {
-									cfg.PK([]string{"slug"})
+									cfg.ID([]string{"slug"})
 									cfg.Attribute("title")
 									cfg.Attribute("slug")
 									cfg.Attribute("rubric-slug")
 									cfg.Attribute("content")
 									cfg.Attribute("author-name")
 									cfg.Attribute("published-at")
-									cfg.Association(
+									cfg.Arrow(
 										"authors",
 										"user",
-										"",
 										0,
-										nil,
-										func(self *data.Object, attrs map[string]interface{}) bool {
-											switch authorName := attrs["full-name"].(type) {
-											case string:
-												return self.Attr("author-name") == authorName
-											default:
-												return false
-											}
-										})
-									cfg.Association(
+										map[string]string{})
+									cfg.Arrow(
 										"rubric",
 										"rubric",
-										"",
 										1,
-										nil,
-										func(self *data.Object, attrs map[string]interface{}) bool {
-											switch slug := attrs["slug"].(type) {
-											case string:
-												return self.Attr("rubric-slug") == slug
-											default:
-												return false
-											}
-										})
+										map[string]string{})
 								})
 							cfg.Schema(
 								"rubric",
 								func(cfg *data.SchemaCfgr) {
 									cfg.Attribute("title")
-									cfg.Association(
+									cfg.Arrow(
 										"publications",
 										"publication",
-										"",
 										0,
-										nil,
-										func(self *data.Object, attrs map[string]interface{}) bool {
-											switch slug := attrs["rubric-slug"].(type) {
-											case string:
-												return self.Attr("slug") == slug
-											default:
-												return false
-											}
-										})
+										map[string]string{})
 								})
 						})
 					cfg.Root(

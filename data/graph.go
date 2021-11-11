@@ -10,23 +10,23 @@ type (
 	}
 )
 
-func New(cfg func(*GraphCfgr)) *Graph {
-	graph := &Graph{
+func New(cfg func(*GraphCfgr)) (g *Graph, err error) {
+	g = &Graph{
 		schemas: map[string]*Schema{},
 		objects: map[string]map[string]interface{}{},
 	}
 	cfg(
 		&GraphCfgr{
-			graph: graph,
+			graph: g,
 		})
-	return graph
+	return
 }
 func (c *GraphCfgr) Schema(n string, cfg func(*SchemaCfgr)) {
 	schema := &Schema{
-		name:         n,
-		pk:           []string{},
-		attributes:   []string{},
-		associations: map[string]*Association{},
+		name:       n,
+		id:         []string{},
+		attributes: []string{},
+		arrows:     map[string]*Arrow{},
 	}
 	c.graph.schemas[n] = schema
 	c.graph.objects[n] = map[string]interface{}{}
@@ -36,7 +36,8 @@ func (c *GraphCfgr) Schema(n string, cfg func(*SchemaCfgr)) {
 			schema:    schema,
 		})
 }
-func (g *Graph) Update(s string, attrs map[string]interface{}) {
+func (g *Graph) Update(s string, attrs map[string]interface{}) (err error) {
 	//schema := r.schemas[s]
 	//objects := r.objects[s]
+	return
 }
