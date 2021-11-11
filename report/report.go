@@ -1,10 +1,13 @@
 package report
 
-import "strings"
+import (
+	"fmt"
+	"strings"
+)
 
 type (
 	recordKind int
-	Context    struct {
+	RContext   struct {
 		depth    int
 		children []interface{} // interface{} is *Context or *Record
 		title    string
@@ -30,34 +33,46 @@ var kindToPrefixMapping = map[recordKind]string{
 	Deprecation: "\t[ deprecation ] ",
 }
 
-func New(t string) (c *Context) {
-	return &Context{
+func New(t string) (c *RContext) {
+	return &RContext{
 		depth:    0,
-		title:    t,
+		title:    fmt.Sprintf("root: %s", t),
 		children: []interface{}{},
 	}
 }
-
-func (c *Context) Write(sb *strings.Builder) {
-	sb.WriteString(c.title)
-	sb.WriteRune('\n')
+func (c *RContext) String() string {
+	acc := []string{}
+	acc = append(acc, c.title)
+	acc = append(acc, "\n")
 	for _, rawChild := range c.children {
 		for i := 0; i <= c.depth; i++ {
-			sb.WriteRune('\t')
+			acc = append(acc, "\t")
 		}
 		switch child := rawChild.(type) {
-		case *Context:
-			child.Write(sb)
+		case *RContext:
+			acc = append(acc, child.String())
 		case *Record:
-			sb.WriteString(kindToPrefixMapping[child.kind])
-			sb.WriteString(child.message)
-			sb.WriteRune('\n')
+			switch child.kind {
+			case Error:
+				acc = append(acc, "\t[ error ] ")
+			case Info:
+				acc = append(acc, "\t[ info ] ")
+			case Warn:
+				acc = append(acc, "\t[ warn ] ")
+			case Deprecation:
+				acc = append(acc, "\t[ deprecation ] ")
+			default:
+				panic("wrong record kind")
+			}
+			acc = append(acc, child.message)
+			acc = append(acc, "\n")
 		default:
 			panic("wrong children type")
 		}
 	}
+	return strings.Join(acc, "")
 }
-func (c *Context) Error(m string) {
+func (c *RContext) Error(m string) {
 	c.children = append(
 		c.children,
 		&Record{
@@ -65,7 +80,7 @@ func (c *Context) Error(m string) {
 			message: m,
 		})
 }
-func (c *Context) Warn(m string) {
+func (c *RContext) Warn(m string) {
 	c.children = append(
 		c.children,
 		&Record{
@@ -73,7 +88,7 @@ func (c *Context) Warn(m string) {
 			message: m,
 		})
 }
-func (c *Context) Deprecation(m string) {
+func (c *RContext) Deprecation(m string) {
 	c.children = append(
 		c.children,
 		&Record{
@@ -81,7 +96,7 @@ func (c *Context) Deprecation(m string) {
 			message: m,
 		})
 }
-func (c *Context) Info(m string) {
+func (c *RContext) Info(m string) {
 	c.children = append(
 		c.children,
 		&Record{
@@ -89,11 +104,11 @@ func (c *Context) Info(m string) {
 			message: m,
 		})
 }
-func (c *Context) Context(t string) *Context {
-	newContext := &Context{
+func (c *RContext) Context(t string) (child *RContext) {
+	child = &RContext{
 		depth: c.depth + 1,
 		title: t,
 	}
-	c.children = append(c.children, newContext)
-	return newContext
+	c.children = append(c.children, child)
+	return child
 }
