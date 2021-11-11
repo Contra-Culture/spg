@@ -9,12 +9,12 @@ type (
 		schema     *Schema
 		sha        []byte
 		updatedAt  time.Time
-		attrs      map[string]string
+		props      map[string]string
 		meta       map[string]interface{}
 		embeddings map[string]interface{} // interface{} is *Object or []*Object
 	}
 )
 
-func (o *Object) Attr(n string) string {
-	return o.attrs[n]
+func (o *Object) Prop(n string) string {
+	return o.props[n]
 }

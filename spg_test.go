@@ -28,8 +28,9 @@ var _ = Describe("spg", func() {
 									cfg.Arrow(
 										"publications",
 										"publication",
-										0,
-										map[string]string{})
+										func(cfgr *data.ArrowCfgr) {
+
+										})
 								})
 							cfg.Schema(
 								"publication",
@@ -44,13 +45,15 @@ var _ = Describe("spg", func() {
 									cfg.Arrow(
 										"authors",
 										"user",
-										0,
-										map[string]string{})
+										func(cfgr *data.ArrowCfgr) {
+
+										})
 									cfg.Arrow(
 										"rubric",
 										"rubric",
-										1,
-										map[string]string{})
+										func(cfgr *data.ArrowCfgr) {
+
+										})
 								})
 							cfg.Schema(
 								"rubric",
@@ -59,8 +62,9 @@ var _ = Describe("spg", func() {
 									cfg.Arrow(
 										"publications",
 										"publication",
-										0,
-										map[string]string{})
+										func(cfgr *data.ArrowCfgr) {
+
+										})
 								})
 						})
 					cfg.Root(
@@ -82,7 +86,7 @@ var _ = Describe("spg", func() {
 										map[string]interface{}{})
 									cfg.Path(
 										func(o *data.Object) []string {
-											title := o.Attr("title")
+											title := o.Prop("title")
 											title = strings.NewReplacer(" ", "-", "&", "-and-", "?", "").Replace(title)
 											return []string{"rubric", title}
 										})
@@ -98,7 +102,7 @@ var _ = Describe("spg", func() {
 										})
 									cfg.Path(
 										func(o *data.Object) []string {
-											title := o.Attr("title")
+											title := o.Prop("title")
 											title = strings.NewReplacer(" ", "-", "&", "-and-", "?", "").Replace(title)
 											return []string{"publication", title}
 										})
