@@ -2,9 +2,9 @@ package spg
 
 import (
 	"github.com/Contra-Culture/go2html"
+	"github.com/Contra-Culture/report"
 	"github.com/Contra-Culture/spg/data"
 	"github.com/Contra-Culture/spg/gennode"
-	"github.com/Contra-Culture/spg/report"
 )
 
 type (

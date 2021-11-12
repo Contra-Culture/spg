@@ -3,7 +3,7 @@ package data
 import (
 	"fmt"
 
-	"github.com/Contra-Culture/spg/report"
+	"github.com/Contra-Culture/report"
 )
 
 type (

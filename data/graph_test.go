@@ -1,8 +1,8 @@
 package data_test
 
 import (
+	"github.com/Contra-Culture/report"
 	. "github.com/Contra-Culture/spg/data"
-	"github.com/Contra-Culture/spg/report"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
