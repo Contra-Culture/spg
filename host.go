@@ -75,9 +75,8 @@ func (c *HostCfgr) DataGraph(cfg func(*data.GraphCfgr)) {
 	}
 	c.host.dataGraph = data.New(c.report.Context("data-graph"), cfg)
 }
-func (h *Host) Update(s string, attrs map[string]interface{}) {
-	// schema := r.schemas[s]
-	// objects := r.objects[s]
+func (h *Host) Update(s string, props map[string]string) (string, error) {
+	return h.dataGraph.Update(s, props)
 }
 func (h *Host) Get(path []string) *Page {
 	if len(path) == 1 && path[0] == "/" {

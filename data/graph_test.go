@@ -52,7 +52,51 @@ var _ = Describe("data", func() {
 					})
 				})
 			})
-
+		})
+		Describe("objects updating", func() {
+			Describe(".Update()", func() {
+				Context("when successfull", func() {
+					It("returns object id", func() {
+						r := report.New("graph")
+						g := New(r, func(cfg *GraphCfgr) {
+							cfg.Schema("account", func(cfg *SchemaCfgr) {
+								cfg.ID([]string{"login"})
+								cfg.Attribute("login")
+								cfg.Attribute("firstName")
+								cfg.Attribute("lastName")
+								cfg.Attribute("bio")
+							})
+							cfg.Schema("rubric", func(cfg *SchemaCfgr) {
+								cfg.ID([]string{"slug"})
+								cfg.Attribute("slug")
+								cfg.Attribute("title")
+								cfg.Attribute("description")
+							})
+							cfg.Schema("publication", func(cfg *SchemaCfgr) {
+								cfg.ID([]string{"slug"})
+								cfg.Attribute("slug")
+								cfg.Attribute("title")
+								cfg.Attribute("content")
+								cfg.Attribute("createdAt")
+								cfg.Attribute("updatedAt")
+								cfg.Attribute("accountLogin")
+							})
+						})
+						id, err := g.Update(
+							"rubric",
+							map[string]string{
+								"slug":        "interviews",
+								"title":       "Interviews",
+								"description": "Interviews with passionate people.",
+							})
+						Expect(err).NotTo(HaveOccurred())
+						Expect(id).To(Equal("interviews"))
+						o, err := g.Get("rubric", "interviews")
+						Expect(err).NotTo(HaveOccurred())
+						Expect(o).NotTo(BeNil())
+					})
+				})
+			})
 		})
 	})
 })

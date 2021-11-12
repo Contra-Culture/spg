@@ -2,6 +2,7 @@ package data
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/Contra-Culture/report"
 )
@@ -9,7 +10,7 @@ import (
 type (
 	Graph struct {
 		schemas map[string]*Schema
-		objects map[string]map[string]interface{} // interface{} is map[string]interface{} or *Object
+		objects map[*Schema]map[string]*Object
 	}
 	GraphCfgr struct {
 		graph  *Graph
@@ -20,7 +21,7 @@ type (
 func New(rc *report.RContext, cfg func(*GraphCfgr)) (g *Graph) {
 	g = &Graph{
 		schemas: map[string]*Schema{},
-		objects: map[string]map[string]interface{}{},
+		objects: map[*Schema]map[string]*Object{},
 	}
 	cfgr := &GraphCfgr{
 		graph:  g,
@@ -43,7 +44,7 @@ func (c *GraphCfgr) Schema(n string, cfg func(*SchemaCfgr)) {
 		arrows:     map[string]*Arrow{},
 	}
 	c.graph.schemas[n] = schema
-	c.graph.objects[n] = map[string]interface{}{}
+	c.graph.objects[schema] = map[string]*Object{}
 	cfg(
 		&SchemaCfgr{
 			graphCfgr: c,
@@ -51,9 +52,34 @@ func (c *GraphCfgr) Schema(n string, cfg func(*SchemaCfgr)) {
 			report:    c.report.Context(fmt.Sprintf("schema: %s", n)),
 		})
 }
-func (g *Graph) Update(s string, attrs map[string]interface{}) (err error) {
-	// schema := r.schemas[s]
-	// objects := r.objects[s]
+func (g *Graph) Get(s, id string) (object *Object, err error) {
+	schema, ok := g.schemas[s]
+	if !ok {
+		err = fmt.Errorf("schema \"%s\" does not exist", s)
+		return
+	}
+	objects := g.objects[schema]
+	object, ok = objects[id]
+	if !ok {
+		err = fmt.Errorf("object %s[%s] does not exist", s, id)
+		return
+	}
+	return
+}
+func (g *Graph) Update(s string, props map[string]string) (id string, err error) {
+	schema, ok := g.schemas[s]
+	if !ok {
+		err = fmt.Errorf("schema \"%s\" does not exist", s)
+		return
+	}
+	object := &Object{
+		schema:    schema,
+		updatedAt: time.Now(),
+		props:     props,
+	}
+	objects := g.objects[schema]
+	id = object.ID()
+	objects[id] = object
 	return
 }
 func (c *GraphCfgr) check() {

@@ -86,7 +86,10 @@ var _ = Describe("spg", func() {
 										map[string]interface{}{})
 									cfg.Path(
 										func(o *data.Object) []string {
-											title := o.Prop("title")
+											title, err := o.Prop("title")
+											if err != nil {
+												panic(err)
+											}
 											title = strings.NewReplacer(" ", "-", "&", "-and-", "?", "").Replace(title)
 											return []string{"rubric", title}
 										})
@@ -102,7 +105,10 @@ var _ = Describe("spg", func() {
 										})
 									cfg.Path(
 										func(o *data.Object) []string {
-											title := o.Prop("title")
+											title, err := o.Prop("title")
+											if err != nil {
+												panic(err)
+											}
 											title = strings.NewReplacer(" ", "-", "&", "-and-", "?", "").Replace(title)
 											return []string{"publication", title}
 										})
