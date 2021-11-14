@@ -5,7 +5,7 @@ import (
 
 	. "github.com/Contra-Culture/spg"
 	"github.com/Contra-Culture/spg/data"
-	"github.com/Contra-Culture/spg/gennode"
+	"github.com/Contra-Culture/spg/node"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
@@ -68,7 +68,7 @@ var _ = Describe("spg", func() {
 								})
 						})
 					cfg.Root(
-						func(cfg *gennode.NodeCfgr) {
+						func(cfg *node.NodeCfgr) {
 							cfg.Schema(
 								"publication",
 								map[string]interface{}{
@@ -80,7 +80,7 @@ var _ = Describe("spg", func() {
 							cfg.Screen([]string{})
 							cfg.Node(
 								"rubric",
-								func(cfg *gennode.NodeCfgr) {
+								func(cfg *node.NodeCfgr) {
 									cfg.Schema(
 										"rubric",
 										map[string]interface{}{})
@@ -96,7 +96,7 @@ var _ = Describe("spg", func() {
 								})
 							cfg.Node(
 								"publication",
-								func(cfg *gennode.NodeCfgr) {
+								func(cfg *node.NodeCfgr) {
 									cfg.Schema(
 										"publication",
 										map[string]interface{}{

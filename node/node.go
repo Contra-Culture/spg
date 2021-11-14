@@ -1,4 +1,4 @@
-package gennode
+package node
 
 import (
 	"github.com/Contra-Culture/spg/data"

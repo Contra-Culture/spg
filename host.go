@@ -4,14 +4,14 @@ import (
 	"github.com/Contra-Culture/go2html/registry"
 	"github.com/Contra-Culture/report"
 	"github.com/Contra-Culture/spg/data"
-	"github.com/Contra-Culture/spg/gennode"
+	"github.com/Contra-Culture/spg/node"
 )
 
 type (
 	Host struct {
 		title     string
 		host      string
-		rootNode  *gennode.Node
+		rootNode  *node.Node
 		prepared  *Node
 		dataGraph *data.Graph
 		templates registry.Registry
@@ -60,13 +60,13 @@ func New(t string, h string, cfg func(*HostCfgr)) *Host {
 	}
 	return host
 }
-func (c *HostCfgr) Root(cfg func(*gennode.NodeCfgr)) {
+func (c *HostCfgr) Root(cfg func(*node.NodeCfgr)) {
 	if c.host.rootNode != nil {
 		c.report.Error("root is already specified")
 		return
 	}
-	c.host.rootNode = gennode.New(
-		func(cfg *gennode.NodeCfgr) {
+	c.host.rootNode = node.New(
+		func(cfg *node.NodeCfgr) {
 			cfg.Path(
 				func(_ *data.Object) []string {
 					return []string{"/"}
