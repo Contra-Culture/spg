@@ -1,7 +1,7 @@
 package spg
 
 import (
-	"github.com/Contra-Culture/go2html"
+	"github.com/Contra-Culture/go2html/registry"
 	"github.com/Contra-Culture/report"
 	"github.com/Contra-Culture/spg/data"
 	"github.com/Contra-Culture/spg/gennode"
@@ -14,7 +14,7 @@ type (
 		rootNode  *gennode.Node
 		prepared  *Node
 		dataGraph *data.Graph
-		templates *go2html.TemplateRegistry
+		templates registry.Registry
 	}
 	HostCfgr struct {
 		host     *Host
@@ -24,17 +24,23 @@ type (
 )
 
 func New(t string, h string, cfg func(*HostCfgr)) *Host {
-	reg := go2html.Reg(t)
+	reg := registry.New()
 	reg.Mkdir([]string{"layouts"})
 	reg.Mkdir([]string{"screens"})
-	reg.Mkdir([]string{"schemas"})
-	reg.Mkdir([]string{"schemas", "fullViews"})
-	reg.Mkdir([]string{"schemas", "cardViews"})
-	reg.Mkdir([]string{"schemas", "listItemViews"})
-	reg.Mkdir([]string{"schemas", "linkViews"})
-	reg.Mkdir([]string{"associations"})
-	reg.Mkdir([]string{"associations", "itemViews"})
-	reg.Mkdir([]string{"associations", "collectionViews"})
+	reg.Mkdirf(
+		[]string{"schemas"},
+		func(dir registry.Registry) {
+			dir.Mkdir([]string{"fullViews"})
+			dir.Mkdir([]string{"cardViews"})
+			dir.Mkdir([]string{"listItemViews"})
+			dir.Mkdir([]string{"linkViews"})
+		})
+	reg.Mkdirf(
+		[]string{"associations"},
+		func(dir registry.Registry) {
+			dir.Mkdir([]string{"itemViews"})
+			dir.Mkdir([]string{"collectionViews"})
+		})
 	host := &Host{
 		title:     t,
 		host:      h,

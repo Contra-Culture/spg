@@ -1,5 +1,7 @@
 github.com/Contra-Culture/go2html v0.0.0-20211031174733-55849d5c7d03 h1:ynIFE6VqdtI+pq+55lCboznwS7yXPH4TeZUFXDONbxE=
 github.com/Contra-Culture/go2html v0.0.0-20211031174733-55849d5c7d03/go.mod h1:b2T6verIh1bOk4xLMlvDe0Edz6juT9ObR0r/YGU8bQY=
+github.com/Contra-Culture/go2html v0.0.0-20211114194844-15d5a62d5621 h1:GIj8fYiXqTRQt+nYr8fAufn67gAy1cXLxp8o6ugDihY=
+github.com/Contra-Culture/go2html v0.0.0-20211114194844-15d5a62d5621/go.mod h1:b2T6verIh1bOk4xLMlvDe0Edz6juT9ObR0r/YGU8bQY=
 github.com/Contra-Culture/report v0.0.0-20211112074958-61fbb4d8519c h1:SH4jlX1oR45Bm5ht6JHXuon99veExTHdwCXIQsHmOQA=
 github.com/Contra-Culture/report v0.0.0-20211112074958-61fbb4d8519c/go.mod h1:g2NT4oypKFydeu+1KleOCeRVAmj1ExRRiZxjCIBCYl0=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
