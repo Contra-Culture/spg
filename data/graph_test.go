@@ -15,8 +15,7 @@ var _ = Describe("data", func() {
 					r := report.New("graph")
 					g := New(r, func(cfg *GraphCfgr) {})
 					Expect(g).NotTo(BeNil())
-					Expect(r.String()).To(Equal("root: graph\n"))
-
+					Expect(report.ToString(r)).To(Equal("| graph\n"))
 				})
 			})
 			Describe(".Schema() specification", func() {
@@ -48,7 +47,7 @@ var _ = Describe("data", func() {
 							})
 						})
 						Expect(g).NotTo(BeNil())
-						Expect(r.String()).To(Equal("root: graph\n\tschema: account\n\tschema: rubric\n\tschema: publication\n"))
+						Expect(report.ToString(r)).To(Equal("| graph\n\t| schema: account\n\t| schema: rubric\n\t| schema: publication\n"))
 					})
 				})
 			})

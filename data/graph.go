@@ -14,11 +14,11 @@ type (
 	}
 	GraphCfgr struct {
 		graph  *Graph
-		report *report.RContext
+		report report.Node
 	}
 )
 
-func New(rc *report.RContext, cfg func(*GraphCfgr)) (g *Graph) {
+func New(rc report.Node, cfg func(*GraphCfgr)) (g *Graph) {
 	g = &Graph{
 		schemas: map[string]*Schema{},
 		objects: map[*Schema]map[string]*Object{},
@@ -49,7 +49,7 @@ func (c *GraphCfgr) Schema(n string, cfg func(*SchemaCfgr)) {
 		&SchemaCfgr{
 			graphCfgr: c,
 			schema:    schema,
-			report:    c.report.Context(fmt.Sprintf("schema: %s", n)),
+			report:    c.report.Structure("schema: %s", n),
 		})
 }
 func (g *Graph) Get(s, id string) (object *Object, err error) {

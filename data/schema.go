@@ -16,7 +16,7 @@ type (
 	SchemaCfgr struct {
 		graphCfgr *GraphCfgr
 		schema    *Schema
-		report    *report.RContext
+		report    report.Node
 	}
 	Arrow struct {
 		limit        int
@@ -30,7 +30,7 @@ type (
 	ArrowCfgr struct {
 		arrow      *Arrow
 		schemaCfgr *SchemaCfgr
-		report     *report.RContext
+		report     report.Node
 	}
 )
 
@@ -60,7 +60,7 @@ func (c *SchemaCfgr) Arrow(n, rn string, cfg func(*ArrowCfgr)) {
 		&ArrowCfgr{
 			arrow:      arrow,
 			schemaCfgr: c,
-			report:     c.report.Context(fmt.Sprintf("arrow: %s", n)),
+			report:     c.report.Structure("arrow: %s", n),
 		})
 	c.schema.arrows[n] = arrow
 }

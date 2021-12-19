@@ -19,7 +19,7 @@ type (
 	HostCfgr struct {
 		host     *Host
 		checkers []func() error
-		report   *report.RContext
+		report   report.Node
 	}
 )
 
@@ -79,7 +79,7 @@ func (c *HostCfgr) DataGraph(cfg func(*data.GraphCfgr)) {
 		c.report.Error("root is already specified")
 		return
 	}
-	c.host.dataGraph = data.New(c.report.Context("data-graph"), cfg)
+	c.host.dataGraph = data.New(c.report.Structure("data-graph"), cfg)
 }
 func (h *Host) Update(s string, props map[string]string) (string, error) {
 	return h.dataGraph.Update(s, props)
