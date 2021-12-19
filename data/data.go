@@ -7,6 +7,7 @@ import (
 )
 
 type (
+	// Object represents a data object, like a blog post or rubric.
 	Object struct {
 		schema    *Schema
 		updatedAt time.Time
@@ -14,6 +15,7 @@ type (
 	}
 )
 
+// .Prop() - is a read accessor to project's property by its name.
 func (o *Object) Prop(n string) (p string, err error) {
 	p, ok := o.props[n]
 	if !ok {
@@ -21,6 +23,8 @@ func (o *Object) Prop(n string) (p string, err error) {
 	}
 	return
 }
+
+// .ID() - returns unique (primary) key for the object.
 func (o *Object) ID() string {
 	var sb strings.Builder
 	for _, pName := range o.schema.id {

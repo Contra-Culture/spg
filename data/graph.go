@@ -8,6 +8,7 @@ import (
 )
 
 type (
+	// Graph - stores a meta-data (schemas) and data objects.
 	Graph struct {
 		schemas map[string]*Schema
 		objects map[*Schema]map[string]*Object
@@ -18,6 +19,7 @@ type (
 	}
 )
 
+// New() - creates a new data graph.
 func New(rc report.Node, cfg func(*GraphCfgr)) (g *Graph) {
 	g = &Graph{
 		schemas: map[string]*Schema{},
@@ -31,10 +33,12 @@ func New(rc report.Node, cfg func(*GraphCfgr)) (g *Graph) {
 	cfgr.check()
 	return
 }
+
+// .Schema() - specifies a data schema within a data graph.
 func (c *GraphCfgr) Schema(n string, cfg func(*SchemaCfgr)) {
 	_, exists := c.graph.schemas[n]
 	if exists {
-		c.report.Error(fmt.Sprintf("schema \"%s\" already specified", n))
+		c.report.Error("schema \"%s\" already specified", n)
 		return
 	}
 	schema := &Schema{
@@ -52,6 +56,8 @@ func (c *GraphCfgr) Schema(n string, cfg func(*SchemaCfgr)) {
 			report:    c.report.Structure("schema: %s", n),
 		})
 }
+
+// .Get() - returns a data object by its schema name an unique (primary) key.
 func (g *Graph) Get(s, id string) (object *Object, err error) {
 	schema, ok := g.schemas[s]
 	if !ok {
@@ -66,6 +72,8 @@ func (g *Graph) Get(s, id string) (object *Object, err error) {
 	}
 	return
 }
+
+// .Update() - updates data graph's objects repository with the new or updated object.
 func (g *Graph) Update(s string, props map[string]string) (id string, err error) {
 	schema, ok := g.schemas[s]
 	if !ok {
@@ -82,6 +90,8 @@ func (g *Graph) Update(s string, props map[string]string) (id string, err error)
 	objects[id] = object
 	return
 }
+
+// .check() - checks data graph (link) consistency at the very end of data graph configuration.
 func (c *GraphCfgr) check() {
 	var (
 		exists       bool
@@ -91,27 +101,27 @@ func (c *GraphCfgr) check() {
 		for arrowName, arrow := range schema.arrows {
 			remoteSchema, exists = c.graph.schemas[arrow.remoteSchema]
 			if exists {
-				c.report.Error(fmt.Sprintf("schema \"%s\" is not specified", arrow.remoteSchema))
+				c.report.Error("schema \"%s\" is not specified", arrow.remoteSchema)
 			}
 			if len(arrow.remoteArrow) > 0 {
 				_, exists = remoteSchema.arrows[arrow.remoteArrow]
 				if exists {
-					c.report.Error(fmt.Sprintf(
+					c.report.Error(
 						"%s>-%s->%s>-[ %s ]->... arrow is not specified",
 						schemaName,
 						arrowName,
 						arrow.remoteSchema,
-						arrow.remoteArrow))
+						arrow.remoteArrow)
 				}
 			}
 			for hostAttr, remoteAttr := range arrow.mapping {
 				_, exists = schema.attributes[hostAttr]
 				if exists {
-					c.report.Error(fmt.Sprintf("%s.%s attribute is not specified", schemaName, hostAttr))
+					c.report.Error("%s.%s attribute is not specified", schemaName, hostAttr)
 				}
 				_, exists = remoteSchema.attributes[remoteAttr]
 				if exists {
-					c.report.Error(fmt.Sprintf("%s.%s attribute is not specified", remoteSchema.name, remoteAttr))
+					c.report.Error("%s.%s attribute is not specified", remoteSchema.name, remoteAttr)
 				}
 			}
 		}

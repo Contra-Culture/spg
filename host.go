@@ -8,6 +8,7 @@ import (
 )
 
 type (
+	// Host - is a container for a whole website.
 	Host struct {
 		title     string
 		host      string
@@ -23,6 +24,7 @@ type (
 	}
 )
 
+// New() - creates new host (website project).
 func New(t string, h string, cfg func(*HostCfgr)) *Host {
 	reg := registry.New()
 	reg.Mkdir([]string{"layouts"})
@@ -60,6 +62,8 @@ func New(t string, h string, cfg func(*HostCfgr)) *Host {
 	}
 	return host
 }
+
+// .Root() - specifies a host's top-level (root) node (page generator).
 func (c *HostCfgr) Root(cfg func(*node.NodeCfgr)) {
 	if c.host.rootNode != nil {
 		c.report.Error("root is already specified")
@@ -74,6 +78,8 @@ func (c *HostCfgr) Root(cfg func(*node.NodeCfgr)) {
 		},
 		cfg)
 }
+
+// .DataGraph() - specifies a data graph for the host.
 func (c *HostCfgr) DataGraph(cfg func(*data.GraphCfgr)) {
 	if c.host.dataGraph != nil {
 		c.report.Error("root is already specified")
@@ -81,9 +87,13 @@ func (c *HostCfgr) DataGraph(cfg func(*data.GraphCfgr)) {
 	}
 	c.host.dataGraph = data.New(c.report.Structure("data-graph"), cfg)
 }
+
+// .Update() - updates host with a new or updated data object and re-renders related pages.
 func (h *Host) Update(s string, props map[string]string) (string, error) {
 	return h.dataGraph.Update(s, props)
 }
+
+// .Get() - provides a generated page by its path.
 func (h *Host) Get(path []string) *Page {
 	if len(path) == 1 && path[0] == "/" {
 		return h.prepared.page
