@@ -80,12 +80,12 @@ func (c *HostCfgr) Root(cfg func(*node.NodeCfgr)) {
 }
 
 // .DataGraph() - specifies a data graph for the host.
-func (c *HostCfgr) DataGraph(cfg func(*data.GraphCfgr)) {
+func (c *HostCfgr) DataGraph(dataDir string, cfg func(*data.GraphCfgr)) {
 	if c.host.dataGraph != nil {
 		c.report.Error("root is already specified")
 		return
 	}
-	c.host.dataGraph = data.New(c.report.Structure("data-graph"), cfg)
+	c.host.dataGraph = data.New(c.report.Structure("data-graph"), dataDir, cfg)
 }
 
 // .Update() - updates host with a new or updated data object and re-renders related pages.

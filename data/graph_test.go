@@ -13,7 +13,7 @@ var _ = Describe("data", func() {
 			Context("when valid specification", func() {
 				It("returns *Graph", func() {
 					r := report.New("graph")
-					g := New(r, func(cfg *GraphCfgr) {})
+					g := New(r, "./data", func(cfg *GraphCfgr) {})
 					Expect(g).NotTo(BeNil())
 					Expect(report.ToString(r)).To(Equal("| graph\n"))
 				})
@@ -22,7 +22,7 @@ var _ = Describe("data", func() {
 				Context("when valid specification", func() {
 					It("adds Schema specification to the graph", func() {
 						r := report.New("graph")
-						g := New(r, func(cfg *GraphCfgr) {
+						g := New(r, "./data/", func(cfg *GraphCfgr) {
 							cfg.Schema("account", func(cfg *SchemaCfgr) {
 								cfg.ID([]string{"login"})
 								cfg.Attribute("login")
@@ -57,7 +57,7 @@ var _ = Describe("data", func() {
 				Context("when successfull", func() {
 					It("returns object id", func() {
 						r := report.New("graph")
-						g := New(r, func(cfg *GraphCfgr) {
+						g := New(r, "./data", func(cfg *GraphCfgr) {
 							cfg.Schema("account", func(cfg *SchemaCfgr) {
 								cfg.ID([]string{"login"})
 								cfg.Attribute("login")

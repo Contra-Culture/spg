@@ -12,6 +12,7 @@ type (
 	Graph struct {
 		schemas map[string]*Schema
 		objects map[*Schema]map[string]*Object
+		dataDir string
 	}
 	GraphCfgr struct {
 		graph  *Graph
@@ -20,10 +21,11 @@ type (
 )
 
 // New() - creates a new data graph.
-func New(rc report.Node, cfg func(*GraphCfgr)) (g *Graph) {
+func New(rc report.Node, dataDir string, cfg func(*GraphCfgr)) (g *Graph) {
 	g = &Graph{
 		schemas: map[string]*Schema{},
 		objects: map[*Schema]map[string]*Object{},
+		dataDir: dataDir,
 	}
 	cfgr := &GraphCfgr{
 		graph:  g,
