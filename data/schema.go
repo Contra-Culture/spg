@@ -23,9 +23,9 @@ type (
 	// Schema represents a type of data objects, like blog posts, arguments, rubrics, categories, etc.
 	schema struct {
 		name       string
-		id         attributesOrderedSet
-		attributes attributesOrderedSet
-		arrows     arrowsOrderedSet
+		id         *attributesOrderedSet
+		attributes *attributesOrderedSet
+		arrows     *arrowsOrderedSet
 		absPath    string
 	}
 	SchemaCfgr struct {
@@ -41,7 +41,7 @@ type (
 		remoteSchema string
 		remoteArrow  string
 		counterCache string
-		mapping      attributesOrderedMapping
+		mapping      *attributesOrderedMapping
 	}
 	ArrowCfgr struct {
 		arrow      *arrow
@@ -50,8 +50,8 @@ type (
 	}
 )
 
-func newAttributes(attrs []string, handleExistance func(string)) (set attributesOrderedSet) {
-	set = attributesOrderedSet{
+func newAttributes(attrs []string, handleExistance func(string)) (set *attributesOrderedSet) {
+	set = &attributesOrderedSet{
 		attributes: map[string]bool{},
 		order:      attrs,
 	}
@@ -60,7 +60,7 @@ func newAttributes(attrs []string, handleExistance func(string)) (set attributes
 	}
 	return
 }
-func (set attributesOrderedSet) add(newAttr string, handleExistance func(string)) {
+func (set *attributesOrderedSet) add(newAttr string, handleExistance func(string)) {
 	if set.attributes[newAttr] {
 		handleExistance(newAttr)
 		return
@@ -68,7 +68,7 @@ func (set attributesOrderedSet) add(newAttr string, handleExistance func(string)
 	set.order = append(set.order, newAttr)
 	set.attributes[newAttr] = true
 }
-func (set attributesOrderedSet) JSONString() string {
+func (set *attributesOrderedSet) JSONString() string {
 	var sb strings.Builder
 	sb.WriteRune('[')
 	for i, n := range set.order {
@@ -82,13 +82,13 @@ func (set attributesOrderedSet) JSONString() string {
 	sb.WriteRune(']')
 	return sb.String()
 }
-func newArrows() arrowsOrderedSet {
-	return arrowsOrderedSet{
+func newArrows() *arrowsOrderedSet {
+	return &arrowsOrderedSet{
 		arrows: map[string]*arrow{},
 		order:  []string{},
 	}
 }
-func (set arrowsOrderedSet) add(a *arrow, handleExistance func(string)) {
+func (set *arrowsOrderedSet) add(a *arrow, handleExistance func(string)) {
 	_, exists := set.arrows[a.name]
 	if exists {
 		handleExistance(a.name)
@@ -97,7 +97,7 @@ func (set arrowsOrderedSet) add(a *arrow, handleExistance func(string)) {
 	set.arrows[a.name] = a
 	set.order = append(set.order, a.name)
 }
-func (set arrowsOrderedSet) JSONString() string {
+func (set *arrowsOrderedSet) JSONString() string {
 	var sb strings.Builder
 	sb.WriteRune('[')
 	for i, n := range set.order {
@@ -124,13 +124,13 @@ func (set arrowsOrderedSet) JSONString() string {
 	sb.WriteRune(']')
 	return sb.String()
 }
-func newAttributesOrderedMapping() attributesOrderedMapping {
-	return attributesOrderedMapping{
+func newAttributesOrderedMapping() *attributesOrderedMapping {
+	return &attributesOrderedMapping{
 		mapping: map[string]string{},
 		order:   []string{},
 	}
 }
-func (set attributesOrderedMapping) add(ha, ra string, handleExistance func(string)) {
+func (set *attributesOrderedMapping) add(ha, ra string, handleExistance func(string)) {
 	if _, exists := set.mapping[ha]; exists {
 		handleExistance(ha)
 		return
@@ -138,7 +138,7 @@ func (set attributesOrderedMapping) add(ha, ra string, handleExistance func(stri
 	set.order = append(set.order, ha)
 	set.mapping[ha] = ra
 }
-func (set attributesOrderedMapping) JSONString() string {
+func (set *attributesOrderedMapping) JSONString() string {
 	var sb strings.Builder
 	sb.WriteRune('[')
 	lastIdx := len(set.order) - 1
@@ -176,6 +176,7 @@ func (c *SchemaCfgr) Arrow(n, rn string, cfg func(*ArrowCfgr)) {
 		name:         n,
 		hostSchema:   c.schema.name,
 		remoteSchema: rn,
+		mapping:      newAttributesOrderedMapping(),
 	}
 	cfg(
 		&ArrowCfgr{

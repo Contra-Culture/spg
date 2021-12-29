@@ -1,6 +1,7 @@
 package data_test
 
 import (
+	"fmt"
 	"os"
 	"strings"
 
@@ -133,7 +134,8 @@ var _ = Describe("data", func() {
 						cfg.Attribute("accountLogin")
 					})
 				})
-				Expect(g.JSONString()).To(Equal("{\"schemas\":{\"account\":{\"name\":\"account\",\"id\":[\"login\"],\"attributes\":[],\"arrows\":[]},\"rubric\":{\"name\":\"rubric\",\"id\":[\"slug\"],\"attributes\":[],\"arrows\":[]},\"publication\":{\"name\":\"publication\",\"id\":[\"slug\"],\"attributes\":[],\"arrows\":[]}}}"))
+				fmt.Printf("\n\nDEBUG: %s\n\n", g.JSONString())
+				Expect(g.JSONString()).To(Equal("{\"schemas\":{\"account\":{\"name\":\"account\",\"id\":[\"login\",\"login\"],\"attributes\":[\"login\",\"firstName\",\"lastName\",\"bio\"],\"arrows\":[]},\"rubric\":{\"name\":\"rubric\",\"id\":[\"slug\",\"slug\"],\"attributes\":[\"slug\",\"title\",\"description\"],\"arrows\":[]},\"publication\":{\"name\":\"publication\",\"id\":[\"slug\",\"slug\"],\"attributes\":[\"slug\",\"title\",\"content\",\"createdAt\",\"updatedAt\",\"accountLogin\"],\"arrows\":[]}}}"))
 			})
 		})
 	})

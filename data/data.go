@@ -28,8 +28,8 @@ func (o *Object) Prop(n string) (p string, err error) {
 // .ID() - returns unique (primary) key for the object.
 func (o *Object) ID() string {
 	var sb strings.Builder
-	for _, pName := range o.schema.id.order {
-		sb.WriteString(o.props[pName])
+	for _, n := range o.schema.id.order {
+		sb.WriteString(o.props[n])
 	}
 	return sb.String()
 }
