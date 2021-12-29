@@ -1,6 +1,8 @@
 package spg_test
 
 import (
+	"fmt"
+	"os"
 	"strings"
 
 	. "github.com/Contra-Culture/spg"
@@ -12,12 +14,19 @@ import (
 
 var _ = Describe("spg", func() {
 	It("works", func() {
+		path, err := os.Executable()
+		if err != nil {
+			panic(err)
+		}
+		chunks := strings.Split(path, "/")
+		path = strings.Join(chunks[:len(chunks)-1], "/")
 		Expect(
 			New(
 				"test",
 				"example.com",
 				func(cfg *HostCfgr) {
 					cfg.DataGraph(
+						fmt.Sprintf("%s/test/data", path),
 						func(cfg *data.GraphCfgr) {
 							cfg.Schema(
 								"author",

@@ -9,9 +9,10 @@ import (
 type (
 	// Object represents a data object, like a blog post or rubric.
 	Object struct {
-		schema    *Schema
+		schema    *schema
 		updatedAt time.Time
 		props     map[string]string
+		absPath   string
 	}
 )
 
@@ -27,8 +28,28 @@ func (o *Object) Prop(n string) (p string, err error) {
 // .ID() - returns unique (primary) key for the object.
 func (o *Object) ID() string {
 	var sb strings.Builder
-	for _, pName := range o.schema.id {
+	for _, pName := range o.schema.id.order {
 		sb.WriteString(o.props[pName])
 	}
+	return sb.String()
+}
+
+// .JSONString() - returns string representation of JSON.
+func (o Object) JSONString() string {
+	var sb strings.Builder
+	sb.WriteRune('"')
+	idx := 0
+	for prop, val := range o.props {
+		sb.WriteRune('"')
+		sb.WriteString(prop)
+		sb.WriteString("\":\"")
+		sb.WriteString(val)
+		lastIdx := len(o.props) - 1
+		if idx < lastIdx {
+			sb.WriteString("\",")
+			idx++
+		}
+	}
+	sb.WriteRune('}')
 	return sb.String()
 }
