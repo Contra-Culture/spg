@@ -12,42 +12,42 @@ import (
 type (
 	// Graph - stores a meta-data (schemas) and data objects.
 	Graph struct {
-		schemas *schemasOrderedSet
-		objects map[*schema]map[string]*Object
+		nodes   *nodesOrderedSet
+		objects map[*node]map[string]*Object
 		dataDir string
 	}
 	GraphCfgr struct {
 		graph  *Graph
 		report report.Node
 	}
-	schemasOrderedSet struct {
-		schemas map[string]*schema
-		order   []string
+	nodesOrderedSet struct {
+		nodes map[string]*node
+		order []string
 	}
 )
 
-func newSchemasOrderedSet() *schemasOrderedSet {
-	return &schemasOrderedSet{
-		schemas: map[string]*schema{},
-		order:   []string{},
+func newNodesOrderedSet() *nodesOrderedSet {
+	return &nodesOrderedSet{
+		nodes: map[string]*node{},
+		order: []string{},
 	}
 }
-func (set *schemasOrderedSet) add(s *schema, handleExistence func(string)) {
-	if _, exists := set.schemas[s.name]; exists {
-		handleExistence(s.name)
+func (set *nodesOrderedSet) add(s *node, handleExistence func(string)) {
+	if _, exists := set.nodes[s.path]; exists {
+		handleExistence(s.path)
 		return
 	}
-	set.order = append(set.order, s.name)
-	set.schemas[s.name] = s
+	set.order = append(set.order, s.path)
+	set.nodes[s.path] = s
 }
-func (set *schemasOrderedSet) JSONString() string {
+func (set *nodesOrderedSet) JSONString() string {
 	var sb strings.Builder
 	sb.WriteString("{")
-	lastIdx := len(set.schemas) - 1
-	for i, schemaName := range set.order {
-		schema := set.schemas[schemaName]
+	lastIdx := len(set.nodes) - 1
+	for i, nodeName := range set.order {
+		schema := set.nodes[nodeName]
 		sb.WriteRune('"')
-		sb.WriteString(schemaName)
+		sb.WriteString(nodeName)
 		sb.WriteString("\":")
 		sb.WriteString(schema.JSONString())
 		if i < lastIdx {
@@ -61,8 +61,8 @@ func (set *schemasOrderedSet) JSONString() string {
 // New() - creates a new data graph.
 func New(rc report.Node, dataDir string, cfg func(*GraphCfgr)) (g *Graph) {
 	g = &Graph{
-		schemas: newSchemasOrderedSet(),
-		objects: map[*schema]map[string]*Object{},
+		nodes:   newNodesOrderedSet(),
+		objects: map[*node]map[string]*Object{},
 		dataDir: dataDir,
 	}
 	cfgr := &GraphCfgr{
@@ -104,32 +104,32 @@ func New(rc report.Node, dataDir string, cfg func(*GraphCfgr)) (g *Graph) {
 }
 
 // .Schema() - specifies a data schema within a data graph.
-func (c *GraphCfgr) Schema(n string, cfg func(*SchemaCfgr)) {
-	s := &schema{
-		name:       n,
-		id:         newAttributes(nil, nil),
+func (c *GraphCfgr) Node(n string, cfg func(*NodeCfgr)) {
+	s := &node{
+		path:       []string{n},
+		pk:         newAttributes(nil, nil),
 		attributes: newAttributes(nil, nil),
-		arrows:     newArrows(),
-		absPath:    strings.Join([]string{c.graph.dataDir, "schemas", n}, "/"),
+		links:      newLinks(),
+		storePath:  strings.Join([]string{c.graph.dataDir, "schemas", n}, "/"),
 	}
-	cfgr := &SchemaCfgr{
+	cfgr := &NodeCfgr{
 		graphCfgr: c,
-		schema:    s,
+		node:      s,
 		report:    c.report.Structure("schema: %s", n),
 	}
 	cfg(cfgr)
 	cfgr.check()
-	c.graph.schemas.add(s, func(n string) {
+	c.graph.nodes.add(s, func(n string) {
 		c.report.Error("schema \"%s\" already specified", n)
 	})
-	_, err := os.Stat(s.absPath)
+	_, err := os.Stat(s.storePath)
 	if os.IsNotExist(err) {
-		err = os.Mkdir(s.absPath, 0766)
+		err = os.Mkdir(s.storePath, 0766)
 	}
 	if err != nil {
 		return
 	}
-	path := fmt.Sprintf("%s/meta.json", s.absPath)
+	path := fmt.Sprintf("%s/meta.json", s.storePath)
 	metaFile, err := os.OpenFile(path, os.O_APPEND|os.O_WRONLY, os.ModeAppend)
 	if os.IsNotExist(err) {
 		metaFile, err = os.Create(path)
@@ -147,7 +147,7 @@ func (c *GraphCfgr) Schema(n string, cfg func(*SchemaCfgr)) {
 
 // .Get() - returns a data object by its schema name an unique (primary) key.
 func (g *Graph) Get(s, id string) (object *Object, err error) {
-	schema, ok := g.schemas.schemas[s]
+	schema, ok := g.nodes.nodes[s]
 	if !ok {
 		err = fmt.Errorf("schema \"%s\" does not exist", s)
 		return
@@ -162,20 +162,20 @@ func (g *Graph) Get(s, id string) (object *Object, err error) {
 }
 
 // .Update() - updates data graph's objects repository with the new or updated object.
-func (g *Graph) Update(s string, props map[string]string) (id string, err error) {
-	schema, ok := g.schemas.schemas[s]
+func (g *Graph) Update(s string, props map[string]string) (pk string, err error) {
+	node, ok := g.nodes.nodes[s]
 	if !ok {
-		err = fmt.Errorf("schema \"%s\" does not exist", s)
+		err = fmt.Errorf("node \"%s\" does not exist", s)
 		return
 	}
-	objects := g.objects[schema]
+	objects := g.objects[node]
 	o := &Object{
-		schema:    schema,
+		node:      node,
 		updatedAt: time.Now(),
 		props:     props,
 	}
-	id = o.ID()
-	objPath := strings.Join([]string{g.dataDir, "schemas", schema.name, id}, "/")
+	pk = o.PK()
+	objPath := strings.Join([]string{g.dataDir, "nodes", node.path, pk}, "/")
 	objFile, err := os.OpenFile(objPath, os.O_APPEND|os.O_WRONLY, os.ModeAppend)
 	if os.IsNotExist(err) {
 		objFile, err = os.Create(objPath)
@@ -188,45 +188,45 @@ func (g *Graph) Update(s string, props map[string]string) (id string, err error)
 	if err != nil {
 		return
 	}
-	objects[id] = o
+	objects[pk] = o
 	return
 }
 
 // .check() - checks data graph (link) consistency at the very end of data graph configuration.
 func (c *GraphCfgr) check() {
 	var (
-		exists       bool
-		remoteSchema *schema
+		exists     bool
+		remoteNode *node
 	)
-	for _, schemaName := range c.graph.schemas.order {
-		schema := c.graph.schemas.schemas[schemaName]
-		for _, arrowName := range schema.arrows.order {
-			arrow := schema.arrows.arrows[arrowName]
-			remoteSchema, exists = c.graph.schemas.schemas[arrow.remoteSchema]
+	for _, nodeName := range c.graph.nodes.order {
+		node := c.graph.nodes.nodes[nodeName]
+		for _, arrowName := range node.links.order {
+			arrow := node.links.links[arrowName]
+			remoteNode, exists = c.graph.nodes.nodes[arrow.remoteNodePath]
 			if !exists {
-				c.report.Error("schema \"%s\" is not specified", arrow.remoteSchema)
+				c.report.Error("node \"%s\" is not specified", arrow.remoteNodePath)
 				continue
 			}
-			for _, remoteArrowName := range remoteSchema.arrows.order {
-				if remoteArrowName != arrow.remoteArrow {
+			for _, remoteLinkName := range remoteNode.links.order {
+				if remoteLinkName != arrow.remoteLinkName {
 					c.report.Error(
 						"%s>-%s->%s>-[ %s ]->... arrow is not specified",
-						schemaName,
+						nodeName,
 						arrowName,
-						arrow.remoteSchema,
-						arrow.remoteArrow)
+						arrow.remoteNodePath,
+						arrow.remoteLinkName)
 				}
 			}
 			for _, hostAttr := range arrow.mapping.order {
 				remoteAttr := arrow.mapping.mapping[hostAttr]
-				for _, a := range schema.attributes.order {
+				for _, a := range node.attributes.order {
 					if a != hostAttr {
-						c.report.Error("%s.%s attribute is not specified", schemaName, hostAttr)
+						c.report.Error("%s.%s attribute is not specified", nodeName, hostAttr)
 					}
 				}
-				for _, a := range remoteSchema.attributes.order {
+				for _, a := range remoteNode.attributes.order {
 					if a != remoteAttr {
-						c.report.Error("%s.%s attribute is not specified", remoteSchema.name, remoteAttr)
+						c.report.Error("%s.%s attribute is not specified", remoteNode.path, remoteAttr)
 					}
 				}
 			}
@@ -236,7 +236,7 @@ func (c *GraphCfgr) check() {
 func (g *Graph) JSONString() string {
 	var sb strings.Builder
 	sb.WriteString("{\"schemas\":")
-	sb.WriteString(g.schemas.JSONString())
+	sb.WriteString(g.nodes.JSONString())
 	sb.WriteString("}")
 	return sb.String()
 }

@@ -28,32 +28,50 @@ var _ = Describe("data", func() {
 					Expect(report.ToString(r)).To(Equal("| graph\n"))
 				})
 			})
-			Describe(".Schema() specification", func() {
+			Describe(".Node() specification", func() {
 				Context("when valid specification", func() {
 					It("adds Schema specification to the graph", func() {
 						r := report.New("graph")
 						g := New(r, path, func(cfg *GraphCfgr) {
-							cfg.Schema("account", func(cfg *SchemaCfgr) {
-								cfg.ID([]string{"login"})
+							cfg.Node("account", func(cfg *NodeCfgr) {
+								cfg.PK([]string{"login"})
 								cfg.Attribute("login")
 								cfg.Attribute("firstName")
 								cfg.Attribute("lastName")
 								cfg.Attribute("bio")
+								cfg.Attribute("publicationsCount")
+								cfg.Link("publications", []string{"publication"}, func(cfg *LinkCfgr) {
+									cfg.Map("login", "authors")
+									cfg.CounterCache("publicationsCount")
+								})
 							})
-							cfg.Schema("rubric", func(cfg *SchemaCfgr) {
-								cfg.ID([]string{"slug"})
+							cfg.Node("rubric", func(cfg *NodeCfgr) {
+								cfg.PK([]string{"slug"})
 								cfg.Attribute("slug")
 								cfg.Attribute("title")
 								cfg.Attribute("description")
+								cfg.Attribute("publicationsCount")
+								cfg.Link("publications", []string{"publication"}, func(cfg *LinkCfgr) {
+									cfg.Map("slug", "rubricSlug")
+									cfg.CounterCache("publicationsCount")
+								})
 							})
-							cfg.Schema("publication", func(cfg *SchemaCfgr) {
-								cfg.ID([]string{"slug"})
+							cfg.Node("publication", func(cfg *NodeCfgr) {
+								cfg.PK([]string{"slug"})
+								cfg.Attribute("rubricSlug")
 								cfg.Attribute("slug")
 								cfg.Attribute("title")
 								cfg.Attribute("content")
 								cfg.Attribute("createdAt")
 								cfg.Attribute("updatedAt")
 								cfg.Attribute("accountLogin")
+								cfg.Link("rubric", []string{"rubric"}, func(cfg *LinkCfgr) {
+									cfg.Map("rubricSlug", "slug")
+									cfg.Limit(1)
+								})
+								cfg.Link("authors", []string{"account"}, func(cfg *LinkCfgr) {
+									cfg.Map("authors", "login")
+								})
 							})
 						})
 						Expect(g).NotTo(BeNil())
@@ -68,27 +86,45 @@ var _ = Describe("data", func() {
 					It("returns object id", func() {
 						r := report.New("graph")
 						g := New(r, path, func(cfg *GraphCfgr) {
-							cfg.Schema("account", func(cfg *SchemaCfgr) {
-								cfg.ID([]string{"login"})
+							cfg.Node("account", func(cfg *NodeCfgr) {
+								cfg.PK([]string{"login"})
 								cfg.Attribute("login")
 								cfg.Attribute("firstName")
 								cfg.Attribute("lastName")
 								cfg.Attribute("bio")
+								cfg.Attribute("publicationsCount")
+								cfg.Link("publications", []string{"publication"}, func(cfg *LinkCfgr) {
+									cfg.Map("login", "authors")
+									cfg.CounterCache("publicationsCount")
+								})
 							})
-							cfg.Schema("rubric", func(cfg *SchemaCfgr) {
-								cfg.ID([]string{"slug"})
+							cfg.Node("rubric", func(cfg *NodeCfgr) {
+								cfg.PK([]string{"slug"})
 								cfg.Attribute("slug")
 								cfg.Attribute("title")
 								cfg.Attribute("description")
+								cfg.Attribute("publicationsCount")
+								cfg.Link("publications", []string{"publication"}, func(cfg *LinkCfgr) {
+									cfg.Map("slug", "rubricSlug")
+									cfg.CounterCache("publicationsCount")
+								})
 							})
-							cfg.Schema("publication", func(cfg *SchemaCfgr) {
-								cfg.ID([]string{"slug"})
+							cfg.Node("publication", func(cfg *NodeCfgr) {
+								cfg.PK([]string{"slug"})
+								cfg.Attribute("rubricSlug")
 								cfg.Attribute("slug")
 								cfg.Attribute("title")
 								cfg.Attribute("content")
 								cfg.Attribute("createdAt")
 								cfg.Attribute("updatedAt")
 								cfg.Attribute("accountLogin")
+								cfg.Link("rubric", []string{"rubric"}, func(cfg *LinkCfgr) {
+									cfg.Map("rubricSlug", "slug")
+									cfg.Limit(1)
+								})
+								cfg.Link("authors", []string{"account"}, func(cfg *LinkCfgr) {
+									cfg.Map("authors", "login")
+								})
 							})
 						})
 						id, err := g.Update(
@@ -111,27 +147,45 @@ var _ = Describe("data", func() {
 			It("returns JSON string", func() {
 				r := report.New("graph")
 				g := New(r, path, func(cfg *GraphCfgr) {
-					cfg.Schema("account", func(cfg *SchemaCfgr) {
-						cfg.ID([]string{"login"})
+					cfg.Node("account", func(cfg *NodeCfgr) {
+						cfg.PK([]string{"login"})
 						cfg.Attribute("login")
 						cfg.Attribute("firstName")
 						cfg.Attribute("lastName")
 						cfg.Attribute("bio")
+						cfg.Attribute("publicationsCount")
+						cfg.Link("publications", []string{"publication"}, func(cfg *LinkCfgr) {
+							cfg.Map("login", "authors")
+							cfg.CounterCache("publicationsCount")
+						})
 					})
-					cfg.Schema("rubric", func(cfg *SchemaCfgr) {
-						cfg.ID([]string{"slug"})
+					cfg.Node("rubric", func(cfg *NodeCfgr) {
+						cfg.PK([]string{"slug"})
 						cfg.Attribute("slug")
 						cfg.Attribute("title")
 						cfg.Attribute("description")
+						cfg.Attribute("publicationsCount")
+						cfg.Link("publications", []string{"publication"}, func(cfg *LinkCfgr) {
+							cfg.Map("slug", "rubricSlug")
+							cfg.CounterCache("publicationsCount")
+						})
 					})
-					cfg.Schema("publication", func(cfg *SchemaCfgr) {
-						cfg.ID([]string{"slug"})
+					cfg.Node("publication", func(cfg *NodeCfgr) {
+						cfg.PK([]string{"slug"})
+						cfg.Attribute("rubricSlug")
 						cfg.Attribute("slug")
 						cfg.Attribute("title")
 						cfg.Attribute("content")
 						cfg.Attribute("createdAt")
 						cfg.Attribute("updatedAt")
 						cfg.Attribute("accountLogin")
+						cfg.Link("rubric", []string{"rubric"}, func(cfg *LinkCfgr) {
+							cfg.Map("rubricSlug", "slug")
+							cfg.Limit(1)
+						})
+						cfg.Link("authors", []string{"account"}, func(cfg *LinkCfgr) {
+							cfg.Map("authors", "login")
+						})
 					})
 				})
 				fmt.Printf("\n\nDEBUG: %s\n\n", g.JSONString())

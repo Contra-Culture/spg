@@ -9,7 +9,7 @@ import (
 type (
 	// Object represents a data object, like a blog post or rubric.
 	Object struct {
-		schema    *schema
+		node      *node
 		updatedAt time.Time
 		props     map[string]string
 		absPath   string
@@ -20,15 +20,15 @@ type (
 func (o *Object) Prop(n string) (p string, err error) {
 	p, ok := o.props[n]
 	if !ok {
-		err = fmt.Errorf("property %s.%s is not specified", o.schema.name, n)
+		err = fmt.Errorf("property %s.%s is not specified", o.node.path, n)
 	}
 	return
 }
 
 // .ID() - returns unique (primary) key for the object.
-func (o *Object) ID() string {
+func (o *Object) PK() string {
 	var sb strings.Builder
-	for _, n := range o.schema.id.order {
+	for _, n := range o.node.pk.order {
 		sb.WriteString(o.props[n])
 	}
 	return sb.String()
@@ -37,16 +37,17 @@ func (o *Object) ID() string {
 // .JSONString() - returns string representation of JSON.
 func (o Object) JSONString() string {
 	var sb strings.Builder
-	sb.WriteRune('"')
+	sb.WriteRune('{')
 	idx := 0
+	lastIdx := len(o.props) - 1
 	for prop, val := range o.props {
 		sb.WriteRune('"')
 		sb.WriteString(prop)
 		sb.WriteString("\":\"")
 		sb.WriteString(val)
-		lastIdx := len(o.props) - 1
+		sb.WriteRune('"')
 		if idx < lastIdx {
-			sb.WriteString("\",")
+			sb.WriteRune(',')
 			idx++
 		}
 	}

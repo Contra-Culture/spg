@@ -12,42 +12,52 @@ type (
 		attributes map[string]bool
 		order      []string
 	}
-	arrowsOrderedSet struct {
-		arrows map[string]*arrow
-		order  []string
+	linksOrderedSet struct {
+		links map[string]*link
+		order []string
 	}
 	attributesOrderedMapping struct {
 		mapping map[string]string
 		order   []string
 	}
+	nodeKind int
 	// Schema represents a type of data objects, like blog posts, arguments, rubrics, categories, etc.
-	schema struct {
-		name       string
-		id         *attributesOrderedSet
+	node struct {
+		kind       nodeKind
+		path       []string
+		pk         *attributesOrderedSet
 		attributes *attributesOrderedSet
-		arrows     *arrowsOrderedSet
-		absPath    string
+		links      *linksOrderedSet
+		storePath  string
 	}
-	SchemaCfgr struct {
+	NodeCfgr struct {
 		graphCfgr *GraphCfgr
-		schema    *schema
+		node      *node
 		report    report.Node
 	}
 	// Arrow sets relations between schemas and objects that belong to that schemas.
-	arrow struct {
-		limit        int
-		name         string
-		hostSchema   string
-		remoteSchema string
-		remoteArrow  string
-		counterCache string
-		mapping      *attributesOrderedMapping
+	link struct {
+		limit          int
+		name           string
+		hostNodePath   []string
+		remoteNodePath []string
+		remoteLinkName string
+		counterCache   string
+		mapping        *attributesOrderedMapping
 	}
-	ArrowCfgr struct {
-		arrow      *arrow
-		schemaCfgr *SchemaCfgr
-		report     report.Node
+	LinkCfgr struct {
+		link     *link
+		nodeCfgr *NodeCfgr
+		report   report.Node
 	}
+)
+
+const (
+	_ nodeKind = iota
+	stringNode
+	orderedMapNode
+	mapNode
+	arrayNode
 )
 
 func newAttributes(attrs []string, handleExistance func(string)) (set *attributesOrderedSet) {
@@ -82,36 +92,36 @@ func (set *attributesOrderedSet) JSONString() string {
 	sb.WriteRune(']')
 	return sb.String()
 }
-func newArrows() *arrowsOrderedSet {
-	return &arrowsOrderedSet{
-		arrows: map[string]*arrow{},
-		order:  []string{},
+func newLinks() *linksOrderedSet {
+	return &linksOrderedSet{
+		links: map[string]*link{},
+		order: []string{},
 	}
 }
-func (set *arrowsOrderedSet) add(a *arrow, handleExistance func(string)) {
-	_, exists := set.arrows[a.name]
+func (set *linksOrderedSet) add(a *link, handleExistance func(string)) {
+	_, exists := set.links[a.name]
 	if exists {
 		handleExistance(a.name)
 		return
 	}
-	set.arrows[a.name] = a
+	set.links[a.name] = a
 	set.order = append(set.order, a.name)
 }
-func (set *arrowsOrderedSet) JSONString() string {
+func (set *linksOrderedSet) JSONString() string {
 	var sb strings.Builder
 	sb.WriteRune('[')
 	for i, n := range set.order {
-		a := set.arrows[n]
+		a := set.links[n]
 		sb.WriteString("{\"limit\":\"")
 		sb.WriteString(strconv.Itoa(a.limit))
 		sb.WriteString("\",\"name\":\"")
 		sb.WriteString(a.name)
-		sb.WriteString("\",\"hostSchema\":\"")
-		sb.WriteString(a.hostSchema)
-		sb.WriteString("\",\"remoteSchema\":\"")
-		sb.WriteString(a.remoteSchema)
-		sb.WriteString("\",\"remoteArrow\":\"")
-		sb.WriteString(a.remoteArrow)
+		sb.WriteString("\",\"hostNode\":\"")
+		sb.WriteString(a.hostNodePath)
+		sb.WriteString("\",\"remoteNode\":\"")
+		sb.WriteString(a.remoteNodePath)
+		sb.WriteString("\",\"remoteLink\":\"")
+		sb.WriteString(a.remoteLinkName)
 		sb.WriteString("\",\"counterCache\":\"")
 		sb.WriteString(a.counterCache)
 		sb.WriteString("\",\"mapping\":")
@@ -143,11 +153,11 @@ func (set *attributesOrderedMapping) JSONString() string {
 	sb.WriteRune('[')
 	lastIdx := len(set.order) - 1
 	for i, n := range set.order {
-		sb.WriteRune('[')
+		sb.WriteString("[\"")
 		sb.WriteString(n)
-		sb.WriteRune(',')
+		sb.WriteString("\",\"")
 		sb.WriteString(set.mapping[n])
-		sb.WriteRune(']')
+		sb.WriteString("\"]")
 		if i < lastIdx {
 			sb.WriteRune(',')
 		}
@@ -156,103 +166,103 @@ func (set *attributesOrderedMapping) JSONString() string {
 	return sb.String()
 }
 
-// .ID() - specifies property names and their order for unique (primary) key calculation for the schema (data) object.
-func (c *SchemaCfgr) ID(id []string) {
-	c.schema.id = newAttributes(id, func(n string) {
+// .PK() - specifies property names and their order for unique (primary) key calculation for the schema (data) object.
+func (c *NodeCfgr) PK(id []string) {
+	c.node.pk = newAttributes(id, func(n string) {
 		c.report.Error("wrong ID: %s", n)
 	})
 }
 
 // .Attribute() - specifies a schema (data) object's property.
-func (c *SchemaCfgr) Attribute(n string) {
-	c.schema.attributes.add(n, func(n string) {
-		c.report.Error("attribute %s.%s already specified", c.schema.name, n)
+func (c *NodeCfgr) Attribute(n string) {
+	c.node.attributes.add(n, func(n string) {
+		c.report.Error("attribute %s.%s already specified", c.node.path, n)
 	})
 }
 
-// .Arrow() - specifies a relation between schema objects, when one object has a reference to another one/other ones.
-func (c *SchemaCfgr) Arrow(n, rn string, cfg func(*ArrowCfgr)) {
-	arrow := &arrow{
-		name:         n,
-		hostSchema:   c.schema.name,
-		remoteSchema: rn,
-		mapping:      newAttributesOrderedMapping(),
+// .Arrow() - specifies a relation between node objects, when one object has a reference to another one/other ones.
+func (c *NodeCfgr) Link(name string, rnPath []string, cfg func(*LinkCfgr)) {
+	link := &link{
+		name:           name,
+		hostNodePath:   c.node.path,
+		remoteNodePath: rnPath,
+		mapping:        newAttributesOrderedMapping(),
 	}
 	cfg(
-		&ArrowCfgr{
-			arrow:      arrow,
-			schemaCfgr: c,
-			report:     c.report.Structure("arrow: %s", n),
+		&LinkCfgr{
+			link:     link,
+			nodeCfgr: c,
+			report:   c.report.Structure("link: %s", name),
 		})
-	c.schema.arrows.add(arrow, func(n string) {
-		c.report.Error("arrow %s>-%s->... already specified", c.schema.name, n)
+	c.node.links.add(link, func(n string) {
+		c.report.Error("link %s>-%s->... already specified", c.node.path, n)
 	})
 }
-func (s *schema) JSONString() string {
+func (s *node) JSONString() string {
 	var sb strings.Builder
-	sb.WriteString("{\"name\":\"")
-	sb.WriteString(s.name)
+	sb.WriteString("{\"path\":\"")
+	sb.WriteString(s.path)
 	sb.WriteString("\",\"id\":")
-	sb.WriteString(s.id.JSONString())
+	sb.WriteString(s.pk.JSONString())
 	sb.WriteString(",\"attributes\":")
 	sb.WriteString(s.attributes.JSONString())
 	sb.WriteString(",\"arrows\":")
-	sb.WriteString(s.arrows.JSONString())
+	sb.WriteString(s.links.JSONString())
 	sb.WriteString("}")
 	return sb.String()
 }
-func (c *SchemaCfgr) check() {
+func (c *NodeCfgr) check() {
 
 }
 
 // .Map() - specifies a properties mapping for objects linking.
 // For example, blog posts may be linked to a rubric, depending on their rubric_slug and rubric's slug properties
-func (c *ArrowCfgr) Map(ha, ra string) {
-	c.arrow.mapping.add(ha, ra, func(n string) {
-		c.schemaCfgr.report.Error(
+func (c *LinkCfgr) Map(ha, ra string) {
+	c.link.mapping.add(ha, ra, func(n string) {
+		c.nodeCfgr.report.Error(
 			"%s>-%s->%s attributes mapping already specified",
-			c.arrow.hostSchema,
-			c.arrow.name,
-			c.arrow.remoteSchema)
+			c.link.hostNodePath,
+			c.link.name,
+			c.link.remoteNodePath)
 	})
 }
 
-// .RemoteArrow() - specifies an arrow on remote schema that allows to link objects through another arrow.
-func (c *ArrowCfgr) RemoteArrow(n string) {
-	if len(c.arrow.remoteArrow) > 0 {
-		c.schemaCfgr.report.Error(
-			"%s>-%s->%s remote arrow already specified",
-			c.arrow.hostSchema,
-			c.arrow.name,
-			c.arrow.remoteSchema)
+// .RemoteLink() - specifies an arrow on remote schema that allows to link objects through another arrow.
+func (c *LinkCfgr) RemoteLink(n string) {
+	if len(c.link.remoteLinkName) > 0 {
+		c.nodeCfgr.report.Error(
+			"%s>-%s->%s remote link already specified",
+			c.link.hostNodePath,
+			c.link.name,
+			c.link.remoteNodePath)
 		return
 	}
-	c.arrow.remoteArrow = n
+	c.link.remoteLinkName = n
 }
 
 // .Limit() - allows to limit a number of linked objects.
-func (c *ArrowCfgr) Limit(l int) {
-	if c.arrow.limit > 0 {
-		c.schemaCfgr.report.Error(
+func (c *LinkCfgr) Limit(l int) {
+	if c.link.limit > 0 {
+		c.nodeCfgr.report.Error(
 			"%s>-%s->%s limit already specified",
-			c.arrow.hostSchema,
-			c.arrow.name,
-			c.arrow.remoteSchema)
+			c.link.hostNodePath,
+			c.link.name,
+			c.link.remoteNodePath)
 		return
 	}
-	c.arrow.limit = l
+	c.link.limit = l
 }
 
 // .CounterCache() - allows to specify a field with the count of associated objects.
 // The value of object counter is using for limiting a number of linked objects (.Limit()).
-func (c *ArrowCfgr) CounterCache(n string) {
-	if len(c.arrow.counterCache) > 0 {
-		c.schemaCfgr.report.Error(
+func (c *LinkCfgr) CounterCache(n string) {
+	if len(c.link.counterCache) > 0 {
+		c.nodeCfgr.report.Error(
 			"%s>-%s->%s counter-cache attribute already specified",
-			c.arrow.hostSchema,
-			c.arrow.name,
-			c.arrow.remoteSchema)
+			c.link.hostNodePath,
+			c.link.name,
+			c.link.remoteNodePath)
 		return
 	}
-	c.arrow.counterCache = n
+	c.link.counterCache = n
 }
