@@ -28,71 +28,71 @@ var _ = Describe("spg", func() {
 					cfg.DataGraph(
 						fmt.Sprintf("%s/test/data", path),
 						func(cfg *data.GraphCfgr) {
-							cfg.Schema(
+							cfg.Node(
 								"author",
-								func(cfg *data.SchemaCfgr) {
+								func(cfg *data.NodeCfgr) {
 									cfg.Attribute("full-name")
 									cfg.Attribute("slug")
 									cfg.Attribute("bio")
-									cfg.Arrow(
+									cfg.Link(
 										"publications",
-										"publication",
-										func(cfgr *data.ArrowCfgr) {
+										[]string{"publication"},
+										func(cfgr *data.LinkCfgr) {
 
 										})
 								})
-							cfg.Schema(
+							cfg.Node(
 								"publication",
-								func(cfg *data.SchemaCfgr) {
-									cfg.ID([]string{"slug"})
+								func(cfg *data.NodeCfgr) {
+									cfg.PK([]string{"slug"})
 									cfg.Attribute("title")
 									cfg.Attribute("slug")
 									cfg.Attribute("rubric-slug")
 									cfg.Attribute("content")
 									cfg.Attribute("author-name")
 									cfg.Attribute("published-at")
-									cfg.Arrow(
+									cfg.Link(
 										"authors",
-										"user",
-										func(cfgr *data.ArrowCfgr) {
+										[]string{"user"},
+										func(cfgr *data.LinkCfgr) {
 
 										})
-									cfg.Arrow(
+									cfg.Link(
 										"rubric",
-										"rubric",
-										func(cfgr *data.ArrowCfgr) {
+										[]string{"rubric"},
+										func(cfgr *data.LinkCfgr) {
 
 										})
 								})
-							cfg.Schema(
+							cfg.Node(
 								"rubric",
-								func(cfg *data.SchemaCfgr) {
+								func(cfg *data.NodeCfgr) {
 									cfg.Attribute("title")
-									cfg.Arrow(
+									cfg.Link(
 										"publications",
-										"publication",
-										func(cfgr *data.ArrowCfgr) {
+										[]string{"publication"},
+										func(cfgr *data.LinkCfgr) {
 
 										})
 								})
 						})
 					cfg.Root(
 						func(cfg *node.NodeCfgr) {
-							cfg.Schema(
+							cfg.Node(
 								"publication",
-								map[string]interface{}{
-									"rubric": nil,
-									"author": nil,
-								},
-							)
+								func(cfg *node.NodeCfgr) {
+
+								})
 							cfg.Layout([]string{})
 							cfg.Screen([]string{})
 							cfg.Node(
 								"rubric",
 								func(cfg *node.NodeCfgr) {
-									cfg.Schema(
+									cfg.Node(
 										"rubric",
-										map[string]interface{}{})
+										func(cfg *node.NodeCfgr) {
+
+										})
 									cfg.Path(
 										func(o *data.Object) []string {
 											title, err := o.Prop("title")
@@ -106,11 +106,10 @@ var _ = Describe("spg", func() {
 							cfg.Node(
 								"publication",
 								func(cfg *node.NodeCfgr) {
-									cfg.Schema(
+									cfg.Node(
 										"publication",
-										map[string]interface{}{
-											"rubric": nil,
-											"author": nil,
+										func(cfg *node.NodeCfgr) {
+
 										})
 									cfg.Path(
 										func(o *data.Object) []string {
