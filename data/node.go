@@ -8,6 +8,7 @@ import (
 )
 
 type (
+	nodePath             []string
 	attributesOrderedSet struct {
 		attributes map[string]bool
 		order      []string
@@ -23,12 +24,16 @@ type (
 	nodeKind int
 	// Schema represents a type of data objects, like blog posts, arguments, rubrics, categories, etc.
 	node struct {
-		kind       nodeKind
-		path       []string
-		pk         *attributesOrderedSet
-		attributes *attributesOrderedSet
-		links      *linksOrderedSet
-		storePath  string
+		kind      nodeKind
+		path      *nodePath
+		pk        *attributesOrderedSet
+		nodes     *nodesOrderedSet
+		links     *linksOrderedSet
+		storePath string
+	}
+	nodesOrderedSet struct {
+		nodes map[string]*node
+		order []string
 	}
 	NodeCfgr struct {
 		graphCfgr *GraphCfgr
@@ -39,8 +44,8 @@ type (
 	link struct {
 		limit          int
 		name           string
-		hostNodePath   []string
-		remoteNodePath []string
+		hostNodePath   *nodePath
+		remoteNodePath *nodePath
 		remoteLinkName string
 		counterCache   string
 		mapping        *attributesOrderedMapping
@@ -59,6 +64,29 @@ const (
 	mapNode
 	arrayNode
 )
+
+func (np *nodePath) slice() []string {
+	return []string(*np)
+}
+func (np *nodePath) append(n string) *nodePath {
+	path := nodePath(append(np.slice(), n))
+	return &path
+}
+func (np *nodePath) JSONString() string {
+	var sb strings.Builder
+	sb.WriteRune('[')
+	lastIdx := len(*np) - 1
+	for i, s := range *np {
+		sb.WriteRune('"')
+		sb.WriteString(s)
+		sb.WriteRune('"')
+		if i < lastIdx {
+			sb.WriteRune(',')
+		}
+	}
+	sb.WriteRune(']')
+	return sb.String()
+}
 
 func newAttributes(attrs []string, handleExistance func(string)) (set *attributesOrderedSet) {
 	set = &attributesOrderedSet{
@@ -79,6 +107,9 @@ func (set *attributesOrderedSet) add(newAttr string, handleExistance func(string
 	set.attributes[newAttr] = true
 }
 func (set *attributesOrderedSet) JSONString() string {
+	if set == nil {
+		return ""
+	}
 	var sb strings.Builder
 	sb.WriteRune('[')
 	for i, n := range set.order {
@@ -108,6 +139,9 @@ func (set *linksOrderedSet) add(a *link, handleExistance func(string)) {
 	set.order = append(set.order, a.name)
 }
 func (set *linksOrderedSet) JSONString() string {
+	if set == nil {
+		return ""
+	}
 	var sb strings.Builder
 	sb.WriteRune('[')
 	for i, n := range set.order {
@@ -116,17 +150,17 @@ func (set *linksOrderedSet) JSONString() string {
 		sb.WriteString(strconv.Itoa(a.limit))
 		sb.WriteString("\",\"name\":\"")
 		sb.WriteString(a.name)
-		sb.WriteString("\",\"hostNode\":\"")
-		sb.WriteString(a.hostNodePath)
-		sb.WriteString("\",\"remoteNode\":\"")
-		sb.WriteString(a.remoteNodePath)
-		sb.WriteString("\",\"remoteLink\":\"")
+		sb.WriteString("\",\"hostNode\":")
+		sb.WriteString(a.hostNodePath.JSONString())
+		sb.WriteString(",\"remoteNode\":")
+		sb.WriteString(a.remoteNodePath.JSONString())
+		sb.WriteString(",\"remoteLink\":\"")
 		sb.WriteString(a.remoteLinkName)
 		sb.WriteString("\",\"counterCache\":\"")
 		sb.WriteString(a.counterCache)
 		sb.WriteString("\",\"mapping\":")
 		sb.WriteString(a.mapping.JSONString())
-		sb.WriteString("\"}")
+		sb.WriteString("}")
 		if i < len(set.order)-1 {
 			sb.WriteRune(',')
 		}
@@ -166,6 +200,60 @@ func (set *attributesOrderedMapping) JSONString() string {
 	return sb.String()
 }
 
+func newNodesOrderedSet() *nodesOrderedSet {
+	return &nodesOrderedSet{
+		nodes: map[string]*node{},
+		order: []string{},
+	}
+}
+func (set *nodesOrderedSet) add(s *node, handleExistence func([]string)) {
+	path := s.path.slice()
+	name := path[len(path)-1]
+	if _, exists := set.nodes[name]; exists {
+		handleExistence(path)
+		return
+	}
+	set.order = append(set.order, name)
+	set.nodes[name] = s
+}
+func (set *nodesOrderedSet) JSONString() string {
+	if set == nil {
+		return ""
+	}
+	var sb strings.Builder
+	sb.WriteString("{")
+	lastIdx := len(set.nodes) - 1
+	for i, nodeName := range set.order {
+		schema := set.nodes[nodeName]
+		sb.WriteRune('"')
+		sb.WriteString(nodeName)
+		sb.WriteString("\":")
+		sb.WriteString(schema.JSONString())
+		if i < lastIdx {
+			sb.WriteRune(',')
+		}
+	}
+	sb.WriteString("}")
+	return sb.String()
+}
+
+func (set *nodesOrderedSet) get(path *nodePath, handleNotFound func([]string)) (n *node, ok bool) {
+	nodes := set.nodes
+	lastIdx := len(path.slice()) - 1
+	for i, chunk := range path.slice() {
+		n, ok = nodes[chunk]
+		if !ok {
+			handleNotFound(path.slice()[:i+1])
+			return
+		}
+		if i == lastIdx {
+			return
+		}
+		nodes = n.nodes.nodes
+	}
+	return
+}
+
 // .PK() - specifies property names and their order for unique (primary) key calculation for the schema (data) object.
 func (c *NodeCfgr) PK(id []string) {
 	c.node.pk = newAttributes(id, func(n string) {
@@ -174,18 +262,24 @@ func (c *NodeCfgr) PK(id []string) {
 }
 
 // .Attribute() - specifies a schema (data) object's property.
-func (c *NodeCfgr) Attribute(n string) {
-	c.node.attributes.add(n, func(n string) {
-		c.report.Error("attribute %s.%s already specified", c.node.path, n)
-	})
+func (c *NodeCfgr) String(n string) {
+	c.node.nodes.add(
+		&node{
+			kind: stringNode,
+			path: c.node.path.append(n),
+		},
+		func(np []string) {
+			c.report.Error("attribute %s.%s already specified", c.node.path, n)
+		})
 }
 
 // .Arrow() - specifies a relation between node objects, when one object has a reference to another one/other ones.
 func (c *NodeCfgr) Link(name string, rnPath []string, cfg func(*LinkCfgr)) {
+	nodePath := nodePath(rnPath)
 	link := &link{
 		name:           name,
 		hostNodePath:   c.node.path,
-		remoteNodePath: rnPath,
+		remoteNodePath: &nodePath,
 		mapping:        newAttributesOrderedMapping(),
 	}
 	cfg(
@@ -200,13 +294,13 @@ func (c *NodeCfgr) Link(name string, rnPath []string, cfg func(*LinkCfgr)) {
 }
 func (s *node) JSONString() string {
 	var sb strings.Builder
-	sb.WriteString("{\"path\":\"")
-	sb.WriteString(s.path)
-	sb.WriteString("\",\"id\":")
+	sb.WriteString("{\"path\":")
+	sb.WriteString(s.path.JSONString())
+	sb.WriteString(",\"id\":")
 	sb.WriteString(s.pk.JSONString())
-	sb.WriteString(",\"attributes\":")
-	sb.WriteString(s.attributes.JSONString())
-	sb.WriteString(",\"arrows\":")
+	sb.WriteString(",\"nodes\":")
+	sb.WriteString(s.nodes.JSONString())
+	sb.WriteString(",\"links\":")
 	sb.WriteString(s.links.JSONString())
 	sb.WriteString("}")
 	return sb.String()

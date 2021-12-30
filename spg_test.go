@@ -31,9 +31,9 @@ var _ = Describe("spg", func() {
 							cfg.Node(
 								"author",
 								func(cfg *data.NodeCfgr) {
-									cfg.Attribute("full-name")
-									cfg.Attribute("slug")
-									cfg.Attribute("bio")
+									cfg.String("full-name")
+									cfg.String("slug")
+									cfg.String("bio")
 									cfg.Link(
 										"publications",
 										[]string{"publication"},
@@ -45,12 +45,12 @@ var _ = Describe("spg", func() {
 								"publication",
 								func(cfg *data.NodeCfgr) {
 									cfg.PK([]string{"slug"})
-									cfg.Attribute("title")
-									cfg.Attribute("slug")
-									cfg.Attribute("rubric-slug")
-									cfg.Attribute("content")
-									cfg.Attribute("author-name")
-									cfg.Attribute("published-at")
+									cfg.String("title")
+									cfg.String("slug")
+									cfg.String("rubric-slug")
+									cfg.String("content")
+									cfg.String("author-name")
+									cfg.String("published-at")
 									cfg.Link(
 										"authors",
 										[]string{"user"},
@@ -67,7 +67,7 @@ var _ = Describe("spg", func() {
 							cfg.Node(
 								"rubric",
 								func(cfg *data.NodeCfgr) {
-									cfg.Attribute("title")
+									cfg.String("title")
 									cfg.Link(
 										"publications",
 										[]string{"publication"},

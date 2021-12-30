@@ -117,7 +117,7 @@ func (c *NodeCfgr) MainSchema(n string) {
 }
 
 // .Schema() specifies the schema on which a content of the generated page depends on, but which has not effect on the page path.
-func (c *NodeCfgr) Schema(n string, arrows map[string]interface{}) {
+func (c *NodeCfgr) Schema(path []string, links map[string]interface{}) {
 	if c.err != "" {
 		return
 	}

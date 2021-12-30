@@ -20,43 +20,7 @@ type (
 		graph  *Graph
 		report report.Node
 	}
-	nodesOrderedSet struct {
-		nodes map[string]*node
-		order []string
-	}
 )
-
-func newNodesOrderedSet() *nodesOrderedSet {
-	return &nodesOrderedSet{
-		nodes: map[string]*node{},
-		order: []string{},
-	}
-}
-func (set *nodesOrderedSet) add(s *node, handleExistence func(string)) {
-	if _, exists := set.nodes[s.path]; exists {
-		handleExistence(s.path)
-		return
-	}
-	set.order = append(set.order, s.path)
-	set.nodes[s.path] = s
-}
-func (set *nodesOrderedSet) JSONString() string {
-	var sb strings.Builder
-	sb.WriteString("{")
-	lastIdx := len(set.nodes) - 1
-	for i, nodeName := range set.order {
-		schema := set.nodes[nodeName]
-		sb.WriteRune('"')
-		sb.WriteString(nodeName)
-		sb.WriteString("\":")
-		sb.WriteString(schema.JSONString())
-		if i < lastIdx {
-			sb.WriteRune(',')
-		}
-	}
-	sb.WriteString("}")
-	return sb.String()
-}
 
 // New() - creates a new data graph.
 func New(rc report.Node, dataDir string, cfg func(*GraphCfgr)) (g *Graph) {
@@ -105,12 +69,13 @@ func New(rc report.Node, dataDir string, cfg func(*GraphCfgr)) (g *Graph) {
 
 // .Schema() - specifies a data schema within a data graph.
 func (c *GraphCfgr) Node(n string, cfg func(*NodeCfgr)) {
+	np := nodePath([]string{n})
 	s := &node{
-		path:       []string{n},
-		pk:         newAttributes(nil, nil),
-		attributes: newAttributes(nil, nil),
-		links:      newLinks(),
-		storePath:  strings.Join([]string{c.graph.dataDir, "schemas", n}, "/"),
+		path:      &np,
+		pk:        newAttributes(nil, nil),
+		nodes:     newNodesOrderedSet(),
+		links:     newLinks(),
+		storePath: strings.Join([]string{c.graph.dataDir, "schemas", n}, "/"),
 	}
 	cfgr := &NodeCfgr{
 		graphCfgr: c,
@@ -119,7 +84,7 @@ func (c *GraphCfgr) Node(n string, cfg func(*NodeCfgr)) {
 	}
 	cfg(cfgr)
 	cfgr.check()
-	c.graph.nodes.add(s, func(n string) {
+	c.graph.nodes.add(s, func(n []string) {
 		c.report.Error("schema \"%s\" already specified", n)
 	})
 	_, err := os.Stat(s.storePath)
@@ -175,7 +140,8 @@ func (g *Graph) Update(s string, props map[string]string) (pk string, err error)
 		props:     props,
 	}
 	pk = o.PK()
-	objPath := strings.Join([]string{g.dataDir, "nodes", node.path, pk}, "/")
+	np := node.path.slice()
+	objPath := strings.Join([]string{g.dataDir, "nodes", strings.Join(np, "/"), pk}, "/")
 	objFile, err := os.OpenFile(objPath, os.O_APPEND|os.O_WRONLY, os.ModeAppend)
 	if os.IsNotExist(err) {
 		objFile, err = os.Create(objPath)
@@ -200,31 +166,32 @@ func (c *GraphCfgr) check() {
 	)
 	for _, nodeName := range c.graph.nodes.order {
 		node := c.graph.nodes.nodes[nodeName]
-		for _, arrowName := range node.links.order {
-			arrow := node.links.links[arrowName]
-			remoteNode, exists = c.graph.nodes.nodes[arrow.remoteNodePath]
+		for _, linkName := range node.links.order {
+			link := node.links.links[linkName]
+			remoteNode, exists = c.graph.nodes.get(link.remoteNodePath, func(path []string) {
+				c.report.Error("node \"%s\" is not specified", link.remoteNodePath)
+			})
 			if !exists {
-				c.report.Error("node \"%s\" is not specified", arrow.remoteNodePath)
 				continue
 			}
 			for _, remoteLinkName := range remoteNode.links.order {
-				if remoteLinkName != arrow.remoteLinkName {
+				if remoteLinkName != link.remoteLinkName {
 					c.report.Error(
-						"%s>-%s->%s>-[ %s ]->... arrow is not specified",
+						"%s>-%s->%s>-[ %s ]->... link is not specified",
 						nodeName,
-						arrowName,
-						arrow.remoteNodePath,
-						arrow.remoteLinkName)
+						linkName,
+						link.remoteNodePath,
+						link.remoteLinkName)
 				}
 			}
-			for _, hostAttr := range arrow.mapping.order {
-				remoteAttr := arrow.mapping.mapping[hostAttr]
-				for _, a := range node.attributes.order {
+			for _, hostAttr := range link.mapping.order {
+				remoteAttr := link.mapping.mapping[hostAttr]
+				for _, a := range node.nodes.order {
 					if a != hostAttr {
 						c.report.Error("%s.%s attribute is not specified", nodeName, hostAttr)
 					}
 				}
-				for _, a := range remoteNode.attributes.order {
+				for _, a := range remoteNode.nodes.order {
 					if a != remoteAttr {
 						c.report.Error("%s.%s attribute is not specified", remoteNode.path, remoteAttr)
 					}
