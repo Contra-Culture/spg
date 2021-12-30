@@ -1,7 +1,6 @@
 package data_test
 
 import (
-	"fmt"
 	"os"
 	"strings"
 
@@ -75,7 +74,7 @@ var _ = Describe("data", func() {
 							})
 						})
 						Expect(g).NotTo(BeNil())
-						Expect(report.ToString(r)).To(Equal("| graph\n\t| schema: account\n\t| schema: rubric\n\t| schema: publication\n"))
+						Expect(report.ToString(r)).To(Equal(""))
 					})
 				})
 			})
@@ -188,8 +187,7 @@ var _ = Describe("data", func() {
 						})
 					})
 				})
-				fmt.Printf("\n\nDEBUG: %s\n\n", g.JSONString())
-				Expect(g.JSONString()).To(Equal("{\"schemas\":{\"account\":{\"name\":\"account\",\"id\":[\"login\",\"login\"],\"attributes\":[\"login\",\"firstName\",\"lastName\",\"bio\"],\"arrows\":[]},\"rubric\":{\"name\":\"rubric\",\"id\":[\"slug\",\"slug\"],\"attributes\":[\"slug\",\"title\",\"description\"],\"arrows\":[]},\"publication\":{\"name\":\"publication\",\"id\":[\"slug\",\"slug\"],\"attributes\":[\"slug\",\"title\",\"content\",\"createdAt\",\"updatedAt\",\"accountLogin\"],\"arrows\":[]}}}"))
+				Expect(g.JSONString()).To(Equal("{\"dataNodes\":{\"account\":{\"pk\":[\"login\",\"login\"],\"nodes\":{\"login\":{\"pk\":[],\"nodes\":[],\"links\":[]},\"firstName\":{\"pk\":[],\"nodes\":[],\"links\":[]},\"lastName\":{\"pk\":[],\"nodes\":[],\"links\":[]},\"bio\":{\"pk\":[],\"nodes\":[],\"links\":[]},\"publicationsCount\":{\"pk\":[],\"nodes\":[],\"links\":[]}},\"links\":[{\"limit\":\"0\",\"name\":\"publications\",\"hostNode\":[\"account\"],\"remoteNode\":[\"publication\"],\"remoteLink\":\"\",\"counterCache\":\"publicationsCount\",\"mapping\":[[\"login\",\"authors\"]]}]},\"rubric\":{\"pk\":[\"slug\",\"slug\"],\"nodes\":{\"slug\":{\"pk\":[],\"nodes\":[],\"links\":[]},\"title\":{\"pk\":[],\"nodes\":[],\"links\":[]},\"description\":{\"pk\":[],\"nodes\":[],\"links\":[]},\"publicationsCount\":{\"pk\":[],\"nodes\":[],\"links\":[]}},\"links\":[{\"limit\":\"0\",\"name\":\"publications\",\"hostNode\":[\"rubric\"],\"remoteNode\":[\"publication\"],\"remoteLink\":\"\",\"counterCache\":\"publicationsCount\",\"mapping\":[[\"slug\",\"rubricSlug\"]]}]},\"publication\":{\"pk\":[\"slug\",\"slug\"],\"nodes\":{\"rubricSlug\":{\"pk\":[],\"nodes\":[],\"links\":[]},\"slug\":{\"pk\":[],\"nodes\":[],\"links\":[]},\"title\":{\"pk\":[],\"nodes\":[],\"links\":[]},\"content\":{\"pk\":[],\"nodes\":[],\"links\":[]},\"createdAt\":{\"pk\":[],\"nodes\":[],\"links\":[]},\"updatedAt\":{\"pk\":[],\"nodes\":[],\"links\":[]},\"accountLogin\":{\"pk\":[],\"nodes\":[],\"links\":[]}},\"links\":[{\"limit\":\"1\",\"name\":\"rubric\",\"hostNode\":[\"publication\"],\"remoteNode\":[\"rubric\"],\"remoteLink\":\"\",\"counterCache\":\"\",\"mapping\":[[\"rubricSlug\",\"slug\"]]},{\"limit\":\"0\",\"name\":\"authors\",\"hostNode\":[\"publication\"],\"remoteNode\":[\"account\"],\"remoteLink\":\"\",\"counterCache\":\"\",\"mapping\":[[\"authors\",\"login\"]]}]}}}"))
 			})
 		})
 	})

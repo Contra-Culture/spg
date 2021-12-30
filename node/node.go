@@ -121,9 +121,6 @@ func (c *NodeCfgr) Schema(path []string, links map[string]interface{}) {
 	if c.err != "" {
 		return
 	}
-	if c.node.mainSchema != "" {
-		c.err = "main schema is already specified"
-		return
-	}
-	c.node.schemas[n] = arrows
+	n := path[len(path)-1]
+	c.node.schemas[n] = links
 }

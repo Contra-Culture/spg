@@ -72,20 +72,20 @@ func (c *GraphCfgr) Node(n string, cfg func(*NodeCfgr)) {
 	np := nodePath([]string{n})
 	s := &node{
 		path:      &np,
-		pk:        newAttributes(nil, nil),
+		pk:        newNames(nil, nil),
 		nodes:     newNodesOrderedSet(),
 		links:     newLinks(),
-		storePath: strings.Join([]string{c.graph.dataDir, "schemas", n}, "/"),
+		storePath: strings.Join([]string{c.graph.dataDir, "dataNodes", n}, "/"),
 	}
 	cfgr := &NodeCfgr{
 		graphCfgr: c,
 		node:      s,
-		report:    c.report.Structure("schema: %s", n),
+		report:    c.report.Structure("data node: %s", n),
 	}
 	cfg(cfgr)
 	cfgr.check()
 	c.graph.nodes.add(s, func(n []string) {
-		c.report.Error("schema \"%s\" already specified", n)
+		c.report.Error("data node \"%s\" already specified", n)
 	})
 	_, err := os.Stat(s.storePath)
 	if os.IsNotExist(err) {
@@ -112,12 +112,12 @@ func (c *GraphCfgr) Node(n string, cfg func(*NodeCfgr)) {
 
 // .Get() - returns a data object by its schema name an unique (primary) key.
 func (g *Graph) Get(s, id string) (object *Object, err error) {
-	schema, ok := g.nodes.nodes[s]
+	node, ok := g.nodes.nodes[s]
 	if !ok {
-		err = fmt.Errorf("schema \"%s\" does not exist", s)
+		err = fmt.Errorf("data node \"%s\" does not exist", s)
 		return
 	}
-	objects := g.objects[schema]
+	objects := g.objects[node]
 	object, ok = objects[id]
 	if !ok {
 		err = fmt.Errorf("object %s[%s] does not exist", s, id)
@@ -202,7 +202,7 @@ func (c *GraphCfgr) check() {
 }
 func (g *Graph) JSONString() string {
 	var sb strings.Builder
-	sb.WriteString("{\"schemas\":")
+	sb.WriteString("{\"dataNodes\":")
 	sb.WriteString(g.nodes.JSONString())
 	sb.WriteString("}")
 	return sb.String()

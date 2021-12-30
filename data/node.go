@@ -8,16 +8,20 @@ import (
 )
 
 type (
-	nodePath             []string
-	attributesOrderedSet struct {
-		attributes map[string]bool
-		order      []string
+	nodePath        []string
+	namesOrderedSet struct {
+		names map[string]bool
+		order []string
+	}
+	nodesOrderedSet struct {
+		nodes map[string]*node
+		order []string
 	}
 	linksOrderedSet struct {
 		links map[string]*link
 		order []string
 	}
-	attributesOrderedMapping struct {
+	namesOrderedMapping struct {
 		mapping map[string]string
 		order   []string
 	}
@@ -26,15 +30,12 @@ type (
 	node struct {
 		kind      nodeKind
 		path      *nodePath
-		pk        *attributesOrderedSet
+		pk        *namesOrderedSet
 		nodes     *nodesOrderedSet
 		links     *linksOrderedSet
 		storePath string
 	}
-	nodesOrderedSet struct {
-		nodes map[string]*node
-		order []string
-	}
+
 	NodeCfgr struct {
 		graphCfgr *GraphCfgr
 		node      *node
@@ -48,7 +49,7 @@ type (
 		remoteNodePath *nodePath
 		remoteLinkName string
 		counterCache   string
-		mapping        *attributesOrderedMapping
+		mapping        *namesOrderedMapping
 	}
 	LinkCfgr struct {
 		link     *link
@@ -88,27 +89,27 @@ func (np *nodePath) JSONString() string {
 	return sb.String()
 }
 
-func newAttributes(attrs []string, handleExistance func(string)) (set *attributesOrderedSet) {
-	set = &attributesOrderedSet{
-		attributes: map[string]bool{},
-		order:      attrs,
+func newNames(attrs []string, handleExistance func(string)) (set *namesOrderedSet) {
+	set = &namesOrderedSet{
+		names: map[string]bool{},
+		order: attrs,
 	}
 	for _, attr := range attrs {
 		set.add(attr, handleExistance)
 	}
 	return
 }
-func (set *attributesOrderedSet) add(newAttr string, handleExistance func(string)) {
-	if set.attributes[newAttr] {
+func (set *namesOrderedSet) add(newAttr string, handleExistance func(string)) {
+	if set.names[newAttr] {
 		handleExistance(newAttr)
 		return
 	}
 	set.order = append(set.order, newAttr)
-	set.attributes[newAttr] = true
+	set.names[newAttr] = true
 }
-func (set *attributesOrderedSet) JSONString() string {
+func (set *namesOrderedSet) JSONString() string {
 	if set == nil {
-		return ""
+		return "[]"
 	}
 	var sb strings.Builder
 	sb.WriteRune('[')
@@ -140,7 +141,7 @@ func (set *linksOrderedSet) add(a *link, handleExistance func(string)) {
 }
 func (set *linksOrderedSet) JSONString() string {
 	if set == nil {
-		return ""
+		return "[]"
 	}
 	var sb strings.Builder
 	sb.WriteRune('[')
@@ -168,13 +169,13 @@ func (set *linksOrderedSet) JSONString() string {
 	sb.WriteRune(']')
 	return sb.String()
 }
-func newAttributesOrderedMapping() *attributesOrderedMapping {
-	return &attributesOrderedMapping{
+func newNamesOrderedMapping() *namesOrderedMapping {
+	return &namesOrderedMapping{
 		mapping: map[string]string{},
 		order:   []string{},
 	}
 }
-func (set *attributesOrderedMapping) add(ha, ra string, handleExistance func(string)) {
+func (set *namesOrderedMapping) add(ha, ra string, handleExistance func(string)) {
 	if _, exists := set.mapping[ha]; exists {
 		handleExistance(ha)
 		return
@@ -182,7 +183,10 @@ func (set *attributesOrderedMapping) add(ha, ra string, handleExistance func(str
 	set.order = append(set.order, ha)
 	set.mapping[ha] = ra
 }
-func (set *attributesOrderedMapping) JSONString() string {
+func (set *namesOrderedMapping) JSONString() string {
+	if set == nil {
+		return "[]"
+	}
 	var sb strings.Builder
 	sb.WriteRune('[')
 	lastIdx := len(set.order) - 1
@@ -218,7 +222,7 @@ func (set *nodesOrderedSet) add(s *node, handleExistence func([]string)) {
 }
 func (set *nodesOrderedSet) JSONString() string {
 	if set == nil {
-		return ""
+		return "[]"
 	}
 	var sb strings.Builder
 	sb.WriteString("{")
@@ -256,7 +260,7 @@ func (set *nodesOrderedSet) get(path *nodePath, handleNotFound func([]string)) (
 
 // .PK() - specifies property names and their order for unique (primary) key calculation for the schema (data) object.
 func (c *NodeCfgr) PK(id []string) {
-	c.node.pk = newAttributes(id, func(n string) {
+	c.node.pk = newNames(id, func(n string) {
 		c.report.Error("wrong ID: %s", n)
 	})
 }
@@ -280,7 +284,7 @@ func (c *NodeCfgr) Link(name string, rnPath []string, cfg func(*LinkCfgr)) {
 		name:           name,
 		hostNodePath:   c.node.path,
 		remoteNodePath: &nodePath,
-		mapping:        newAttributesOrderedMapping(),
+		mapping:        newNamesOrderedMapping(),
 	}
 	cfg(
 		&LinkCfgr{
@@ -294,13 +298,14 @@ func (c *NodeCfgr) Link(name string, rnPath []string, cfg func(*LinkCfgr)) {
 }
 func (s *node) JSONString() string {
 	var sb strings.Builder
-	sb.WriteString("{\"path\":")
-	sb.WriteString(s.path.JSONString())
-	sb.WriteString(",\"id\":")
+	sb.WriteRune('{')
+	sb.WriteString("\"pk\":")
 	sb.WriteString(s.pk.JSONString())
-	sb.WriteString(",\"nodes\":")
+	sb.WriteRune(',')
+	sb.WriteString("\"nodes\":")
 	sb.WriteString(s.nodes.JSONString())
-	sb.WriteString(",\"links\":")
+	sb.WriteRune(',')
+	sb.WriteString("\"links\":")
 	sb.WriteString(s.links.JSONString())
 	sb.WriteString("}")
 	return sb.String()
